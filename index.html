@@ -46,8 +46,9 @@ body {
 
 </style>
 <body>
+<div id="history"></div>
 <!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
-<script src="d3.v3.min.js"></script>
+<script src="d3.v3.js"></script>
 <script src="box.js"></script>
 <script>
 var labels = true; // show the text labels beside individual boxplots?
@@ -194,4 +195,53 @@ function iqr(k) {
   };
 }
 
+d3.json("benchmarks/latest.json", function(json) {
+    // TODO: add a tree (nested list items?) of available benchmarks
+});
+
+fetch('benchmarks/results')
+	.then(resp => resp.text())
+	.then(t => {
+	    let files = t.match(/[^\r\n]+/g);
+        let history = document.getElementById('history');
+
+        files.forEach(file => {
+            // TODO: create history square per file
+            // later, we can use these squares to switch between data sets
+            d3.json('benchmarks/history/' + file, json => {
+                console.log(file + 'loaded');
+                // TODO: prepare the data in the same way we do with latest
+                // then we can click on the square to see historical data
+                // update the square visially to reflect the fact that it is ready
+            });
+        });
+	    console.log(t)
+    })
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
