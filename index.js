@@ -4,9 +4,6 @@ var margin = {top: 30, right: 50, bottom: 70, left: 50};
 var  width = 800 - margin.left - margin.right;
 var height = 400 - margin.top - margin.bottom;
 	
-var min = Infinity,
-    max = -Infinity;
-
 function resetParent() {
 	document.querySelector('#chart') && document.querySelector('#chart').remove();
 	var parent = document.createElement('div');
@@ -17,9 +14,9 @@ function resetParent() {
 function doViz(data) {
 	resetParent();
 
-	max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
+	var max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity);
-	min = data.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity
+	var min = data.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity
 	)), Infinity);
 
 	var chart = d3.box()
@@ -80,7 +77,7 @@ function doViz(data) {
 		.attr("dy", ".71em")
 		.style("text-anchor", "end")
 		.style("font-size", "16px")
-		.text("Revenue in €");
+		.text("Runtime in ms");
 
 	// draw x axis
 	svg.append("g")
@@ -177,7 +174,6 @@ fetch('benchmarks/results')
 	    let files = t.match(/[^\r\n]+/g);
         let history = document.getElementById('history');
         files.forEach(file => {
-            // later, we can use these squares to switch between data sets
 			let historyBox = document.createElement('div');
 			historyBox.classList.add('tooltip');
 			historyBox.setAttribute("data-tooltip", file);
@@ -186,8 +182,6 @@ fetch('benchmarks/results')
             d3.json('benchmarks/history/' + file, json => {
 				console.log(file + 'loaded');
 				console.log(json);
-                // TODO: prepare the data in the same way we do with latest
-                // then we can click on the square to see historical data
                 // update the square visially to reflect the fact that it is ready
 				historyBox.classList.add('loaded');
 				historyBox.onclick = () => doChartFromJson(json);
