@@ -7,11 +7,15 @@ var height = 400 - margin.top - margin.bottom;
 var min = Infinity,
     max = -Infinity;
 
-function doViz(data) {
+function resetParent() {
 	document.querySelector('#chart') && document.querySelector('#chart').remove();
 	var parent = document.createElement('div');
 	parent.id = 'chart';
 	document.body.appendChild(parent);
+}
+
+function doViz(data) {
+	resetParent();
 
 	max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity);
@@ -177,7 +181,7 @@ fetch('benchmarks/results')
 			let historyBox = document.createElement('div');
 			historyBox.classList.add('tooltip');
 			historyBox.setAttribute("data-tooltip", file);
-			history.appendChild(historyBox);
+			history.insertBefore(historyBox, history.firstChild);
 
             d3.json('benchmarks/history/' + file, json => {
 				console.log(file + 'loaded');
