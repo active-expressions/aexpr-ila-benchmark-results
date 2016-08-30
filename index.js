@@ -92,49 +92,6 @@ function doViz(data) {
 		.style("font-size", "16px")
 		.text("Quarter");
 }
-// parse in the data	
-d3.csv("data.csv", function(error, csv) {
-	// using an array of arrays with
-	// data[n][2] 
-	// where n = number of columns in the csv file 
-	// data[i][0] = name of the ith column
-	// data[i][1] = array of values of ith column
-
-	var data = [];
-	data[0] = [];
-	data[1] = [];
-	data[2] = [];
-	data[3] = [];
-	// add more rows if your csv file has more columns
-
-	// add here the header of the csv file
-	data[0][0] = "Q1";
-	data[1][0] = "Q2";
-	data[2][0] = "Q3";
-	data[3][0] = "Q4";
-	// add more rows if your csv file has more columns
-
-	data[0][1] = [];
-	data[1][1] = [];
-	data[2][1] = [];
-	data[3][1] = [];
-  
-	csv.forEach(function(x) {
-		var v1 = Math.floor(x.Q1),
-			v2 = Math.floor(x.Q2),
-			v3 = Math.floor(x.Q3),
-			v4 = Math.floor(x.Q4);
-			// add more variables if your csv file has more columns
-
-		data[0][1].push(v1);
-		data[1][1].push(v2);
-		data[2][1].push(v3);
-		data[3][1].push(v4);
-		 // add more rows if your csv file has more columns
-	});
-
-	doViz(data);
-});
 
 // Returns a function to compute the interquartile range.
 function iqr(k) {
