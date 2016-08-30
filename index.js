@@ -144,6 +144,7 @@ function iqr(k) {
 
 d3.json("benchmarks/latest.json", function(json) {
     // TODO: add a tree (nested list items?) of available benchmarks
+
 });
 
 fetch('benchmarks/results')
@@ -151,16 +152,20 @@ fetch('benchmarks/results')
 	.then(t => {
 	    let files = t.match(/[^\r\n]+/g);
         let history = document.getElementById('history');
-
         files.forEach(file => {
-            // TODO: create history square per file
             // later, we can use these squares to switch between data sets
+			let historyBox = document.createElement('div');
+			historyBox.classList.add('tooltip');
+			historyBox.setAttribute("data-tooltip", file);
+			history.appendChild(historyBox);
+
             d3.json('benchmarks/history/' + file, json => {
-                console.log(file + 'loaded');
+				console.log(file + 'loaded');
+				console.log(json);
                 // TODO: prepare the data in the same way we do with latest
                 // then we can click on the square to see historical data
                 // update the square visially to reflect the fact that it is ready
+				historyBox.classList.add('loaded');
             });
         });
-	    console.log(t)
     });

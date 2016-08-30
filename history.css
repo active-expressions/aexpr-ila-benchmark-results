@@ -1,0 +1,20 @@
+
+#history {
+    width: 100%;
+    height: 200px;
+    border: 2px solid steelblue;
+    background-color: gray;
+}
+
+#history div {
+    float: left;
+    width: 20px;
+    height: 20px;
+    border: 2px solid steelblue;
+    background-color: gray;
+    margin: 5px;
+}
+
+#history div.loaded {
+    background-color: blueviolet;
+}
