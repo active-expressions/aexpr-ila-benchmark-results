@@ -17,4 +17,5 @@
 
 #history div.loaded {
     background-color: blueviolet;
+    cursor: pointer;
 }
