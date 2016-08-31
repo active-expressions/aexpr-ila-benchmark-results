@@ -4,15 +4,7 @@ var margin = {top: 30, right: 50, bottom: 70, left: 50};
 var  width = 800 - margin.left - margin.right;
 var height = 400 - margin.top - margin.bottom;
 	
-function resetParent() {
-	document.querySelector('#chart') && document.querySelector('#chart').remove();
-	var parent = document.createElement('div');
-	parent.id = 'chart';
-	document.body.appendChild(parent);
-}
-
-function doViz(data) {
-	resetParent();
+function boxPlot(data, { id, title }) {
 
 	var max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity);
@@ -25,7 +17,7 @@ function doViz(data) {
 		.domain([min, max])
 		.showLabels(labels);
 
-	var svg = d3.select("#chart").append("svg")
+	var svg = d3.select('#' + id).append("svg")
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 		.attr("class", "box")
@@ -65,7 +57,7 @@ function doViz(data) {
 		.attr("text-anchor", "middle")
 		.style("font-size", "18px")
 		//.style("text-decoration", "underline")
-		.text("Revenue 2012");
+		.text(title);
 
 	// draw y axis
 	svg.append("g")
@@ -107,41 +99,76 @@ function iqr(k) {
   };
 }
 
-function doChartFromJson(json) {
+function copyJson(json) {
+	return JSON.parse(JSON.stringify(json));
+}
+
+function resetAndBuildInfo(data) {
+	let infoParent = document.querySelector('#info');
+	infoParent.innerHTML = `<ul>
+    <li><b>Browser:</b> ${data.browser}</li>
+    <li><b>Runtime:</b> ${data.test.runtime}</li>
+    <li><b>Tests:</b> ${data.test.tests} (${data.test.errors}, ${data.test.failed}, ${data.test.skipped})</li>
+</ul>`;
+}
+
+function resetParent() {
+	let chartParent = document.querySelector('#charts');
+	chartParent.innerHTML = '';
+
+	createChartParentWithId('chart');
+}
+
+function createChartParentWithId(id) {
+	var parent = document.createElement('div');
+	parent.id = id;
+	document.querySelector('#charts').appendChild(parent);
+}
+
+function doChartsFromJson(json) {
+	resetParent();
+
+	json = copyJson(json);
 	var latestData = json[Object.keys(json)[0]];
+
+	resetAndBuildInfo(latestData);
+
 	var suites = latestData.suites;
 	var aspectRatios = suites
-		.filter(suite => suite.suite[0] === 'Maintain Aspect Ratio')
+		.filter(suite => _.isEqual(suite.suite.slice(0, currentSuite.length), currentSuite))
 		.map(suite => suite.title);
 
 	var data = aspectRatios
 		.map(ar => [ar.name, ar.results.slice(-30)]);
 
-	doViz(data);
+	boxPlot(data, {
+		id: 'chart',
+		title: currentSuite.join(' - ')
+	});
 }
+
+let history = document.getElementById('history');
+let currentSuite = ['Partially Rewritten'];
 
 d3.json("benchmarks/latest.json", function(json) {
     // TODO: add a tree (nested list items?) of available benchmarks
-	doChartFromJson(json);
+	doChartsFromJson(json);
 });
 
 fetch('benchmarks/results')
 	.then(resp => resp.text())
 	.then(t => {
-	    let files = t.match(/[^\r\n]+/g);
-        let history = document.getElementById('history');
-        files.forEach(file => {
+		let files = t.match(/[^\r\n]+/g);
+		files.forEach(file => {
 			let historyBox = document.createElement('div');
 			historyBox.classList.add('tooltip');
 			historyBox.setAttribute("data-tooltip", file);
 			history.insertBefore(historyBox, history.firstChild);
 
-            d3.json('benchmarks/history/' + file, json => {
-				console.log(file + 'loaded');
-				console.log(json);
-                // update the square visially to reflect the fact that it is ready
+			d3.json('benchmarks/history/' + file, json => {
+				// update the square visially to reflect the fact that it is ready
 				historyBox.classList.add('loaded');
-				historyBox.onclick = () => doChartFromJson(json);
-            });
-        });
-    });
+				historyBox.onclick = () => doChartsFromJson(json);
+			});
+		});
+	});
