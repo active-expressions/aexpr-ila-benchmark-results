@@ -2,6 +2,10 @@
 #history {
     border: 2px solid steelblue;
     background-color: gray;
+
+    clear: both;
+    overflow-wrap: normal;
+    overflow: hidden;
 }
 
 #history div {
