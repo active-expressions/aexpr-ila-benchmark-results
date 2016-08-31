@@ -4,7 +4,7 @@ var margin = {top: 30, right: 50, bottom: 70, left: 50};
 var  width = 800 - margin.left - margin.right;
 var height = 400 - margin.top - margin.bottom;
 	
-function boxPlot(data, { id, title }) {
+function boxPlot(data, { id, title, benchName }) {
 
 	var max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity);
@@ -82,7 +82,7 @@ function boxPlot(data, { id, title }) {
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
-		.text("Quarter");
+		.text(benchName);
 }
 
 // Returns a function to compute the interquartile range.
@@ -115,8 +115,6 @@ function resetAndBuildInfo(data) {
 function resetParent() {
 	let chartParent = document.querySelector('#charts');
 	chartParent.innerHTML = '';
-
-	createChartParentWithId('chart');
 }
 
 function createChartParentWithId(id) {
@@ -125,35 +123,66 @@ function createChartParentWithId(id) {
 	document.querySelector('#charts').appendChild(parent);
 }
 
+function preprocessJson(json) {
+    json = copyJson(json);
+    return json[Object.keys(json)[0]];
+}
+
+function guidGenerator() {
+    var S4 = function() {
+        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+function getSuiteData(json, suiteNames) {
+    var suites = json.suites;
+    var aspectRatios = suites
+        .filter(suite => _.isEqual(suite.suite.slice(0, suiteNames.length), suiteNames))
+        .map(suite => suite.title)
+        //.filter(bench => bench.name !== 'Rewriting');
+
+    var data = aspectRatios
+        .map(ar => [ar.name, ar.results.slice(-30)]);
+
+    return data;
+}
+
+
+function chartForSuite(benchmarkData, suiteNames) {
+    var data = getSuiteData(benchmarkData, suiteNames);
+
+    let chartId = 'chart' + guidGenerator();
+    createChartParentWithId(chartId);
+    boxPlot(data, {
+        id: chartId,
+        title: suiteNames.join(' - '),
+        benchName: '-'
+    });
+}
+
 function doChartsFromJson(json) {
 	resetParent();
 
-	json = copyJson(json);
-	var latestData = json[Object.keys(json)[0]];
+    var benchmarkData = preprocessJson(json);
 
-	resetAndBuildInfo(latestData);
+    resetAndBuildInfo(benchmarkData);
 
-	var suites = latestData.suites;
-	var aspectRatios = suites
-		.filter(suite => _.isEqual(suite.suite.slice(0, currentSuite.length), currentSuite))
-		.map(suite => suite.title);
-
-	var data = aspectRatios
-		.map(ar => [ar.name, ar.results.slice(-30)]);
-
-	boxPlot(data, {
-		id: 'chart',
-		title: currentSuite.join(' - ')
-	});
+    chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
+    chartForSuite(benchmarkData, ['Partially Rewritten']);
+    chartForSuite(benchmarkData, ['Partially Wrapped']);
+    chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
+    chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
+    chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
 }
 
-let history = document.getElementById('history');
-let currentSuite = ['Partially Rewritten'];
+d3.json("benchmarks/latest.json", doChartsFromJson);
 
-d3.json("benchmarks/latest.json", function(json) {
-    // TODO: add a tree (nested list items?) of available benchmarks
-	doChartsFromJson(json);
-});
+
+/*
+ * HISTORY
+ */
+let history = document.getElementById('history');
 
 fetch('benchmarks/results')
 	.then(resp => resp.text())

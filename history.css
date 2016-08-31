@@ -5,7 +5,7 @@
 
     clear: both;
     overflow-wrap: normal;
-    overflow: hidden;
+    overflow: visible; /*hidden*/
 }
 
 #history div {
