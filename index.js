@@ -78,7 +78,7 @@ function boxPlot(data, { id, title, benchName }) {
 		.call(xAxis)
 		.append("text")             // text label for the x axis
 		.attr("x", (width / 2) )
-		.attr("y",  10 )
+		.attr("y",  20 )
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
@@ -183,7 +183,7 @@ d3.json("benchmarks/latest.json", doChartsFromJson);
  * HISTORY
  */
 let history = document.getElementById('history');
-
+history.classList.add('clearfix');
 fetch('benchmarks/results')
 	.then(resp => resp.text())
 	.then(t => {
