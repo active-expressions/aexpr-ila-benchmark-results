@@ -22,6 +22,9 @@
     cursor: pointer;
 }
 
+/*
+ from: https://perishablepress.com/new-clearfix-hack/
+ */
 .clearfix:after {
     visibility: hidden;
     display: block;

@@ -1,10 +1,10 @@
 var labels = true; // show the text labels beside individual boxplots?
 
-var margin = {top: 30, right: 50, bottom: 70, left: 50};
-var  width = 800 - margin.left - margin.right;
-var height = 400 - margin.top - margin.bottom;
-	
 function boxPlot(data, { id, title, benchName }) {
+	var margin = {top: 30, right: 50, bottom: 70, left: 50};
+	var  width = 800 - margin.left - margin.right;
+	var height = 400 - margin.top - margin.bottom;
+
 
 	var max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity);
