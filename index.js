@@ -1,16 +1,17 @@
 var labels = true; // show the text labels beside individual boxplots?
 
-function boxPlot(data, { id, title, benchName }) {
-	var margin = {top: 30, right: 50, bottom: 70, left: 50};
-	var  width = 800 - margin.left - margin.right;
-	var height = 400 - margin.top - margin.bottom;
-
-
-	var max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
-	)), -Infinity);
-	var min = data.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity
-	)), Infinity);
-
+function boxPlot(data, {
+	id,
+	title,
+	benchName,
+	min= data.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity
+	)), Infinity),
+	max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
+	)), -Infinity),
+	margin = {top: 30, right: 50, bottom: 70, left: 50},
+	width = 800 - margin.left - margin.right,
+	height = 400 - margin.top - margin.bottom
+}) {
 	var chart = d3.box()
 		.whiskers(iqr(1.5))
 		.height(height)
@@ -117,10 +118,20 @@ function resetParent() {
 	chartParent.innerHTML = '';
 }
 
-function createChartParentWithId(id) {
+function guidGenerator() {
+	var S4 = function() {
+		return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+	};
+	return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+function createChartParentAndReturnId() {
+	let id = 'chart' + guidGenerator();
 	var parent = document.createElement('div');
 	parent.id = id;
 	document.querySelector('#charts').appendChild(parent);
+
+	return id;
 }
 
 function preprocessJson(json) {
@@ -128,18 +139,11 @@ function preprocessJson(json) {
     return json[Object.keys(json)[0]];
 }
 
-function guidGenerator() {
-    var S4 = function() {
-        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-    };
-    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
-}
-
 function getSuiteData(json, suiteNames) {
     var suites = json.suites;
     var aspectRatios = suites
         .filter(suite => _.isEqual(suite.suite.slice(0, suiteNames.length), suiteNames))
-        .map(suite => suite.title)
+        .map(suite => suite.title);
         //.filter(bench => bench.name !== 'Rewriting');
 
     var data = aspectRatios
@@ -152,13 +156,31 @@ function getSuiteData(json, suiteNames) {
 function chartForSuite(benchmarkData, suiteNames) {
     var data = getSuiteData(benchmarkData, suiteNames);
 
-    let chartId = 'chart' + guidGenerator();
-    createChartParentWithId(chartId);
+	//_.isEqual(suite.suite.slice(0, suiteNames.length), suiteNames)
+
     boxPlot(data, {
-        id: chartId,
+        id: createChartParentAndReturnId(),
         title: suiteNames.join(' - '),
-        benchName: '-'
+        benchName: '-',
+		min: data.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity
+		)), Infinity),
+		max: data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
+		)), -Infinity)
     });
+}
+
+function minMaxThenCreateChart() {
+
+}
+
+function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
+	let dataDiff = getSuiteData(benchmarkData, ['AExpr Construction', 'Different Object']),
+		dataSame = getSuiteData(benchmarkData, ['AExpr Construction', 'Same Object']);
+	debugger
+
+	margin = {top: 30, right: 50, bottom: 70, left: 50},
+		width = 800 - margin.left - margin.right,
+		height = 400 - margin.top - margin.bottom
 }
 
 function doChartsFromJson(json) {
@@ -168,15 +190,25 @@ function doChartsFromJson(json) {
 
     resetAndBuildInfo(benchmarkData);
 
+	AEXPR_CONSTRUCTION_CHART(benchmarkData);
+	chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
+	chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
     chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
     chartForSuite(benchmarkData, ['Partially Rewritten']);
     chartForSuite(benchmarkData, ['Partially Wrapped']);
-    chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
-    chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
-    chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
+	chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
+	chartForSuite(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
+	chartForSuite(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
 }
 
-d3.json("benchmarks/latest.json", doChartsFromJson);
+d3.json("../active-expressions-benchmark/results/latest.json", (error, json) => {
+	if(!error) {
+		doChartsFromJson(json)
+	} else {
+		console.warn('fallback to latest ci benchmark');
+		d3.json("benchmarks/latest.json", doChartsFromJson);
+	}
+});
 
 
 /*
