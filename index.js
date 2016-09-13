@@ -218,8 +218,8 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
         id: createChartParentAndReturnId(),
         title: 'AExpr Construction (create 1000 AExprs)',
         benchName: '-',
-        min: tickingAndRewritingMin,
-        max: tickingAndRewritingMax,
+        min: 0,//tickingAndRewritingMin,
+        max: 10,//tickingAndRewritingMax,
         margin,
         width,
         height
@@ -232,8 +232,8 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
         id: createChartParentAndReturnId(),
         title: 'AExpr Construction (create 1000 AExprs)',
         benchName: '-',
-        min: interpretationMin,
-        max: interpretationMax,
+        min: 0,//interpretationMin,
+        max: 1000,//interpretationMax,
         margin: margin2,
         width: width2,
         height: height2

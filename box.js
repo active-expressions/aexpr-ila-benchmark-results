@@ -189,6 +189,22 @@ d3.box = function() {
           .style("opacity", 1e-6)
           .remove();
 
+      var aboveOutliers = outlierIndices.filter(i => data[1][i] > domain()[1]);
+      var numAboveOutliers = aboveOutliers.length;
+      if(aboveOutliers.length > 0) {
+        var aboveOutlier = g.selectAll("text.aboveOutlier")
+            .data([numAboveOutliers])
+            .enter()
+            .append("text");
+
+        //Add SVG Text Element Attributes
+        var textLabels = aboveOutlier
+            .attr("x", function(d) { return width / 2})
+            .attr("y", function(d) { return x1(domain()[1]); })
+            .html(d => '⬆ ' + d)
+            .attr("text-anchor", function(d, i) { return "middle"; })
+      }
+
       // Compute the tick format.
       var format = tickFormat || x1.tickFormat(8);
 
