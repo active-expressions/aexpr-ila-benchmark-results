@@ -8,7 +8,7 @@ function boxPlot(data, {
 	)), Infinity),
 	max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity),
-	margin = {top: 30, right: 50, bottom: 70, left: 50},
+	margin = {top: 30, right: 50, bottom: 70, left: 60},
 	width = 800 - margin.left - margin.right,
 	height = 400 - margin.top - margin.bottom
 }) {
@@ -32,7 +32,7 @@ function boxPlot(data, {
 
 	var xAxis = d3.svg.axis()
 		.scale(x)
-		.orient("bottom");
+		.orient("bottom")
 
 	// the y-axis
 	var y = d3.scale.linear()
@@ -65,19 +65,27 @@ function boxPlot(data, {
 		.attr("class", "y axis")
 		.call(yAxis)
 		.append("text") // and text1
-		.attr("transform", "rotate(-90)")
-		.attr("y", 6)
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height/2)
+		.attr("y", -55)
 		.attr("dy", ".71em")
-		.style("text-anchor", "end")
+		.style("text-anchor", "middle")
 		.style("font-size", "16px")
-		.text("Runtime in ms");
+		.text("Execution Time in ms");
 
 	// draw x axis
-	svg.append("g")
+	var xxxAxis = svg.append("g")
 		.attr("class", "x axis")
 		.attr("transform", "translate(0," + (height  + margin.top + 10) + ")")
-		.call(xAxis)
-		.append("text")             // text label for the x axis
+		.call(xAxis);
+/*    xxxAxis.selectAll("text")
+        .attr("y", 0)
+        .attr("x", -7)
+        .attr("dy", ".35em")
+        .attr("transform", "rotate(-90)")
+        .style("text-anchor", "end");
+*/
+		xxxAxis.append("text")             // text label for the x axis
 		.attr("x", (width / 2) )
 		.attr("y",  20 )
 		.attr("dy", ".71em")
@@ -176,11 +184,61 @@ function minMaxThenCreateChart() {
 function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	let dataDiff = getSuiteData(benchmarkData, ['AExpr Construction', 'Different Object']),
 		dataSame = getSuiteData(benchmarkData, ['AExpr Construction', 'Same Object']);
-	debugger
 
-	margin = {top: 30, right: 50, bottom: 70, left: 50},
-		width = 800 - margin.left - margin.right,
-		height = 400 - margin.top - margin.bottom
+    dataDiff.forEach(dat => dat[0] += '\n'+'Different Object');
+    dataSame.forEach(dat => dat[0] += '\n'+'Same Object');
+
+    function tickingOrRewriting(dat) {
+        return dat[0].startsWith('Rewriting') ||dat[0].startsWith('Ticking');
+    }
+    function interpretation(dat) {
+        return !tickingOrRewriting(dat);
+    }
+    let tickingAndRewritingData = dataDiff.filter(tickingOrRewriting)
+        .concat(dataSame.filter(tickingOrRewriting));
+    tickingAndRewritingData.sort();
+    let interpretationData = dataDiff.filter(interpretation)
+        .concat(dataSame.filter(interpretation));
+    interpretationData.sort();
+
+    let tickingAndRewritingMin = tickingAndRewritingData.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity)), Infinity);
+    let tickingAndRewritingMax = tickingAndRewritingData.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity)), -Infinity);
+    let interpretationMin = interpretationData.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity)), Infinity);
+    let interpretationMax = interpretationData.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity)), -Infinity);
+    const scale = 100;
+    tickingAndRewritingMin = Math.min(tickingAndRewritingMin, interpretationMin / scale);
+    tickingAndRewritingMax = Math.max(tickingAndRewritingMax, interpretationMax / scale);
+    interpretationMin = Math.min(tickingAndRewritingMin * scale, interpretationMin);
+    interpretationMax = Math.max(tickingAndRewritingMax * scale, interpretationMax);
+
+    let margin = {top: 30, right: 50, bottom: 70, left: 60},
+        width = 600 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+    boxPlot(tickingAndRewritingData, {
+        id: createChartParentAndReturnId(),
+        title: 'AExpr Construction (create 1000 AExprs)',
+        benchName: '-',
+        min: tickingAndRewritingMin,
+        max: tickingAndRewritingMax,
+        margin,
+        width,
+        height
+    });
+
+    let margin2 = {top: 30, right: 50, bottom: 70, left: 60},
+        width2 = 400 - margin2.left - margin2.right,
+        height2 = 400 - margin2.top - margin2.bottom;
+    boxPlot(interpretationData, {
+        id: createChartParentAndReturnId(),
+        title: 'AExpr Construction (create 1000 AExprs)',
+        benchName: '-',
+        min: interpretationMin,
+        max: interpretationMax,
+        margin: margin2,
+        width: width2,
+        height: height2
+    });
+
 }
 
 function doChartsFromJson(json) {
