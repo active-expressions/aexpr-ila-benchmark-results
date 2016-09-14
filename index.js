@@ -10,7 +10,8 @@ function boxPlot(data, {
 	)), -Infinity),
 	margin = {top: 30, right: 50, bottom: 70, left: 60},
 	width = 800 - margin.left - margin.right,
-	height = 400 - margin.top - margin.bottom
+	height = 400 - margin.top - margin.bottom,
+	yAxisText = "Execution Time in ms"
 }) {
 	var chart = d3.box()
 		.whiskers(iqr(1.5))
@@ -71,7 +72,7 @@ function boxPlot(data, {
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
-		.text("Execution Time in ms");
+		.text(yAxisText);
 
 	// draw x axis
 	var xxxAxis = svg.append("g")
@@ -185,60 +186,78 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	let dataDiff = getSuiteData(benchmarkData, ['AExpr Construction', 'Different Object']),
 		dataSame = getSuiteData(benchmarkData, ['AExpr Construction', 'Same Object']);
 
-    dataDiff.forEach(dat => dat[0] += '\n'+'Different Object');
-    dataSame.forEach(dat => dat[0] += '\n'+'Same Object');
+	dataDiff.forEach(dat => dat[0] += '\n'+'Different Object');
+	dataSame.forEach(dat => dat[0] += '\n'+'Same Object');
 
-    function tickingOrRewriting(dat) {
-        return dat[0].startsWith('Rewriting') ||dat[0].startsWith('Ticking');
-    }
-    function interpretation(dat) {
-        return !tickingOrRewriting(dat);
-    }
-    let tickingAndRewritingData = dataDiff.filter(tickingOrRewriting)
-        .concat(dataSame.filter(tickingOrRewriting));
-    tickingAndRewritingData.sort();
-    let interpretationData = dataDiff.filter(interpretation)
-        .concat(dataSame.filter(interpretation));
-    interpretationData.sort();
+	function tickingOrRewriting(dat) {
+		return dat[0].startsWith('Rewriting') ||dat[0].startsWith('Ticking');
+	}
+	function interpretation(dat) {
+		return !tickingOrRewriting(dat);
+	}
+	let tickingAndRewritingData = dataDiff.filter(tickingOrRewriting)
+		.concat(dataSame.filter(tickingOrRewriting));
+	tickingAndRewritingData.sort();
+	let interpretationData = dataDiff.filter(interpretation)
+		.concat(dataSame.filter(interpretation));
+	interpretationData.sort();
 
-    let tickingAndRewritingMin = tickingAndRewritingData.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity)), Infinity);
-    let tickingAndRewritingMax = tickingAndRewritingData.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity)), -Infinity);
-    let interpretationMin = interpretationData.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity)), Infinity);
-    let interpretationMax = interpretationData.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity)), -Infinity);
-    const scale = 100;
-    tickingAndRewritingMin = Math.min(tickingAndRewritingMin, interpretationMin / scale);
-    tickingAndRewritingMax = Math.max(tickingAndRewritingMax, interpretationMax / scale);
-    interpretationMin = Math.min(tickingAndRewritingMin * scale, interpretationMin);
-    interpretationMax = Math.max(tickingAndRewritingMax * scale, interpretationMax);
+	let tickingAndRewritingMin = tickingAndRewritingData.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity)), Infinity);
+	let tickingAndRewritingMax = tickingAndRewritingData.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity)), -Infinity);
+	let interpretationMin = interpretationData.reduce((acc, dat) => Math.min(acc, dat[1].reduce((acc, num) => Math.min(acc, num), Infinity)), Infinity);
+	let interpretationMax = interpretationData.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity)), -Infinity);
+	const scale = 100;
+	tickingAndRewritingMin = Math.min(tickingAndRewritingMin, interpretationMin / scale);
+	tickingAndRewritingMax = Math.max(tickingAndRewritingMax, interpretationMax / scale);
+	interpretationMin = Math.min(tickingAndRewritingMin * scale, interpretationMin);
+	interpretationMax = Math.max(tickingAndRewritingMax * scale, interpretationMax);
 
-    let margin = {top: 30, right: 50, bottom: 70, left: 60},
-        width = 600 - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom;
-    boxPlot(tickingAndRewritingData, {
-        id: createChartParentAndReturnId(),
-        title: 'AExpr Construction (create 1000 AExprs)',
-        benchName: '-',
-        min: 0,//tickingAndRewritingMin,
-        max: 10,//tickingAndRewritingMax,
-        margin,
-        width,
-        height
-    });
+	let margin = {top: 30, right: 50, bottom: 70, left: 60},
+		width = 600 - margin.left - margin.right,
+		height = 400 - margin.top - margin.bottom;
+	boxPlot(tickingAndRewritingData, {
+		id: createChartParentAndReturnId(),
+		title: 'AExpr Construction (create 1000 AExprs)',
+		benchName: '-',
+		min: 0,//tickingAndRewritingMin,
+		max: 10,//tickingAndRewritingMax,
+		margin,
+		width,
+		height
+	});
 
-    let margin2 = {top: 30, right: 50, bottom: 70, left: 60},
-        width2 = 400 - margin2.left - margin2.right,
-        height2 = 400 - margin2.top - margin2.bottom;
-    boxPlot(interpretationData, {
-        id: createChartParentAndReturnId(),
-        title: 'AExpr Construction (create 1000 AExprs)',
-        benchName: '-',
-        min: 0,//interpretationMin,
-        max: 1000,//interpretationMax,
-        margin: margin2,
-        width: width2,
-        height: height2
-    });
+	let margin2 = {top: 30, right: 50, bottom: 70, left: 60},
+		width2 = 400 - margin2.left - margin2.right,
+		height2 = 400 - margin2.top - margin2.bottom;
+	boxPlot(interpretationData, {
+		id: createChartParentAndReturnId(),
+		title: 'AExpr Construction (create 1000 AExprs)',
+		benchName: '-',
+		min: 0,//interpretationMin,
+		max: 1000,//interpretationMax,
+		margin: margin2,
+		width: width2,
+		height: height2
+	});
+}
 
+function AEXPR_UPDATE_CHART(benchmarkData) {
+	benchmarkData = copyJson(benchmarkData);
+
+	let data = getSuiteData(benchmarkData, ['Maintain Aspect Ratio']);
+	let baseline = data.find(dat => dat[0] === 'Baseline');
+	let baselineMedian = d3.median(baseline[1]);
+
+	data.forEach(dat => {
+		dat[1] = dat[1].map(val => val / baselineMedian);
+	});
+
+	boxPlot(data, {
+		id: createChartParentAndReturnId(),
+		title: 'AExpr Update (Normalized to baseline)',
+		benchName: 'Implementation Strategy',
+		yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
+	});
 }
 
 function doChartsFromJson(json) {
@@ -248,10 +267,11 @@ function doChartsFromJson(json) {
 
     resetAndBuildInfo(benchmarkData);
 
+	AEXPR_UPDATE_CHART(benchmarkData);
+    chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
 	AEXPR_CONSTRUCTION_CHART(benchmarkData);
 	chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
 	chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
-    chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
     chartForSuite(benchmarkData, ['Partially Rewritten']);
     chartForSuite(benchmarkData, ['Partially Wrapped']);
 	chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
