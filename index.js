@@ -241,6 +241,38 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	});
 }
 
+function ratioWithConfidenceIntervals(a, b) {
+
+	const sampleSize = 30;
+	function randomSample(arr) {
+		return arr[Math.floor(Math.random() * arr.length)];
+	}
+
+	function getMedianOfRandomSample(arr) {
+		var randomValues = [];
+		for(let i = 0; i < sampleSize; i++) {
+			randomValues.push(randomSample(arr));
+		}
+		return d3.median(randomValues);
+	}
+
+	function getRatioFromRandomSample(arr1, arr2) {
+		return getMedianOfRandomSample(arr1) / getMedianOfRandomSample(arr2);
+	}
+
+	const medianRatios = [];
+	for(let i = 0; i < 10000; i++) {
+		medianRatios.push(getRatioFromRandomSample(a, b));
+	}
+
+	medianRatios.sort();
+	return {
+		ratio: d3.median(a) / d3.median(b),
+		lowerBound: d3.quantile(medianRatios, 0.025),
+		upperBound: d3.quantile(medianRatios, 0.975)
+	}
+}
+
 function AEXPR_UPDATE_CHART(benchmarkData) {
 	benchmarkData = copyJson(benchmarkData);
 
@@ -248,6 +280,40 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 	let baseline = data.find(dat => dat[0] === 'Baseline');
 	let baselineMedian = d3.median(baseline[1]);
 
+	// calculate medians and confidence intervals
+	let tickingData = data.find(dat => dat[0] === 'Ticking');
+	let interpretationData = data.find(dat => dat[0] === 'Interpretation');
+	let rewritingData = data.find(dat => dat[0] === 'Rewriting');
+
+	function printMedian(benchData) {
+		const exactMedian = d3.median(benchData[1]);
+		return exactMedian.toFixed(2);
+	}
+
+	function printRelativeSlowdown(benchData) {
+		const digits = 2,
+			info = ratioWithConfidenceIntervals(benchData[1], baseline[1]);
+		return `${info.ratio.toFixed(digits)} [${info.lowerBound.toFixed(digits)} - ${info.upperBound.toFixed(digits)}]`;
+	}
+
+	// show medians and confidence intervals
+	let medianParent = document.getElementById(createChartParentAndReturnId());
+	medianParent.innerHTML = `
+<p>AExpr update (maintain aspectRatio example):</p>
+<ul> timing [ms]
+  <li>baseline: ${printMedian(baseline)}</li>
+  <li>ticking: ${printMedian(tickingData)}</li>
+  <li>interpretation: ${printMedian(interpretationData)}</li>
+  <li>rewriting: ${printMedian(rewritingData)}</li>
+</ul>
+<ul> Relative Slowdown (vs baseline)
+  <li>ticking: ${printRelativeSlowdown(tickingData)}</li>
+  <li>interpretation: ${printRelativeSlowdown(interpretationData)}</li>
+  <li>rewriting: ${printRelativeSlowdown(rewritingData)}</li>
+</ul>
+`;
+
+	// normalize data
 	data.forEach(dat => {
 		dat[1] = dat[1].map(val => val / baselineMedian);
 	});
