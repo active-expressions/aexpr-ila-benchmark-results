@@ -186,6 +186,39 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	let dataDiff = getSuiteData(benchmarkData, ['AExpr Construction', 'Different Object']),
 		dataSame = getSuiteData(benchmarkData, ['AExpr Construction', 'Same Object']);
 
+	// medians, etc.
+	let tickingDiff = dataDiff.find(dat => dat[0] === 'Ticking');
+	let interpretationDiff = dataDiff.find(dat => dat[0] === 'Interpretation');
+	let rewritingDiff = dataDiff.find(dat => dat[0] === 'Rewriting');
+	let tickingSame = dataSame.find(dat => dat[0] === 'Ticking');
+	let interpretationSame = dataSame.find(dat => dat[0] === 'Interpretation');
+	let rewritingSame = dataSame.find(dat => dat[0] === 'Rewriting');
+
+	let medianParent = document.getElementById(createChartParentAndReturnId());
+	medianParent.innerHTML = `
+<p>AExpr Construction (create 1000 aexprs example):</p>
+<ul> timing [ms]
+  <li>ticking (same object): ${printMedian(tickingSame)}</li>
+  <li>interpretation (same object): ${printMedian(interpretationSame)}</li>
+  <li>rewriting (same object): ${printMedian(rewritingSame)}</li>
+  <li>ticking (different objects): ${printMedian(tickingDiff)}</li>
+  <li>interpretation (different objects): ${printMedian(interpretationDiff)}</li>
+  <li>rewriting (different objects): ${printMedian(rewritingDiff)}</li>
+</ul>
+<ul> Relative Slowdown (different Objects vs same Object)
+  <li>ticking: ${printRelativeSlowdown(tickingDiff, tickingSame)}</li>
+  <li>interpretation: ${printRelativeSlowdown(interpretationDiff, interpretationSame)}</li>
+  <li>rewriting: ${printRelativeSlowdown(rewritingDiff, rewritingSame)}</li>
+</ul>
+<ul> Relative Slowdown (vs ticking)
+  <li>interpretation (same object): ${printRelativeSlowdown(interpretationSame, tickingSame)}</li>
+  <li>interpretation (different objects): ${printRelativeSlowdown(interpretationDiff, tickingDiff)}</li>
+  <li>rewriting (same object): ${printRelativeSlowdown(rewritingSame, tickingSame)}</li>
+  <li>rewriting (different objects): ${printRelativeSlowdown(rewritingDiff, tickingDiff)}</li>
+</ul>
+`;
+
+	// charts:
 	dataDiff.forEach(dat => dat[0] += '\n'+'Different Object');
 	dataSame.forEach(dat => dat[0] += '\n'+'Same Object');
 
@@ -273,6 +306,17 @@ function ratioWithConfidenceIntervals(a, b) {
 	}
 }
 
+function printMedian(benchData) {
+	const exactMedian = d3.median(benchData[1]);
+	return exactMedian.toFixed(2);
+}
+
+function printRelativeSlowdown(benchData, referenceData) {
+	const digits = 2,
+		info = ratioWithConfidenceIntervals(benchData[1], referenceData[1]);
+	return `${info.ratio.toFixed(digits)} [${info.lowerBound.toFixed(digits)} - ${info.upperBound.toFixed(digits)}]`;
+}
+
 function AEXPR_UPDATE_CHART(benchmarkData) {
 	benchmarkData = copyJson(benchmarkData);
 
@@ -285,17 +329,6 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 	let interpretationData = data.find(dat => dat[0] === 'Interpretation');
 	let rewritingData = data.find(dat => dat[0] === 'Rewriting');
 
-	function printMedian(benchData) {
-		const exactMedian = d3.median(benchData[1]);
-		return exactMedian.toFixed(2);
-	}
-
-	function printRelativeSlowdown(benchData) {
-		const digits = 2,
-			info = ratioWithConfidenceIntervals(benchData[1], baseline[1]);
-		return `${info.ratio.toFixed(digits)} [${info.lowerBound.toFixed(digits)} - ${info.upperBound.toFixed(digits)}]`;
-	}
-
 	// show medians and confidence intervals
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
@@ -307,9 +340,9 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
   <li>rewriting: ${printMedian(rewritingData)}</li>
 </ul>
 <ul> Relative Slowdown (vs baseline)
-  <li>ticking: ${printRelativeSlowdown(tickingData)}</li>
-  <li>interpretation: ${printRelativeSlowdown(interpretationData)}</li>
-  <li>rewriting: ${printRelativeSlowdown(rewritingData)}</li>
+  <li>ticking: ${printRelativeSlowdown(tickingData, baseline)}</li>
+  <li>interpretation: ${printRelativeSlowdown(interpretationData, baseline)}</li>
+  <li>rewriting: ${printRelativeSlowdown(rewritingData, baseline)}</li>
 </ul>
 `;
 
@@ -326,6 +359,14 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 	});
 }
 
+function withIgnoreErrors(cb) {
+    try {
+        cb();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 function doChartsFromJson(json) {
 	resetParent();
 
@@ -333,11 +374,15 @@ function doChartsFromJson(json) {
 
     resetAndBuildInfo(benchmarkData);
 
-	AEXPR_UPDATE_CHART(benchmarkData);
-    chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
-	AEXPR_CONSTRUCTION_CHART(benchmarkData);
-	chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
-	chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
+    withIgnoreErrors(() => {
+        AEXPR_CONSTRUCTION_CHART(benchmarkData);
+        chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
+        chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
+    });
+    withIgnoreErrors(() => {
+        AEXPR_UPDATE_CHART(benchmarkData);
+        chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
+    });
     chartForSuite(benchmarkData, ['Partially Rewritten']);
     chartForSuite(benchmarkData, ['Partially Wrapped']);
 	chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
