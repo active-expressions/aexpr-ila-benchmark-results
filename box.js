@@ -113,26 +113,6 @@ d3.box = function() {
           .attr("y", function(d) { return x1(d[2]); })
           .attr("height", function(d) { return x1(d[0]) - x1(d[2]); });
 
-      // Update median line.
-      var medianLine = g.selectAll("line.median")
-          .data([quartileData[1]]);
-
-      medianLine.enter().append("line")
-          .attr("class", "median")
-          .attr("x1", 0)
-          .attr("y1", x0)
-          .attr("x2", width)
-          .attr("y2", x0)
-        .transition()
-          .duration(duration)
-          .attr("y1", x1)
-          .attr("y2", x1);
-
-      medianLine.transition()
-          .duration(duration)
-          .attr("y1", x1)
-          .attr("y2", x1);
-
       // Update whiskers.
       var whisker = g.selectAll("line.whisker")
           .data(whiskerData || []);
@@ -169,7 +149,7 @@ d3.box = function() {
 
       outlier.enter().insert("circle", "text")
           .attr("class", "outlier")
-          .attr("r", 5)
+          .attr("r", 3)
           .attr("cx", width / 2)
           .attr("cy", function(i) { return x0(d[i]); })
           .style("opacity", 1e-6)
@@ -204,6 +184,26 @@ d3.box = function() {
             .html(d => '⬆ ' + d)
             .attr("text-anchor", function(d, i) { return "middle"; })
       }
+
+      // Update median line.
+      var medianLine = g.selectAll("line.median")
+          .data([quartileData[1]]);
+
+      medianLine.enter().append("line")
+          .attr("class", "median")
+          .attr("x1", 0)
+          .attr("y1", x0)
+          .attr("x2", width)
+          .attr("y2", x0)
+          .transition()
+          .duration(duration)
+          .attr("y1", x1)
+          .attr("y2", x1);
+
+      medianLine.transition()
+          .duration(duration)
+          .attr("y1", x1)
+          .attr("y2", x1);
 
       // Compute the tick format.
       var format = tickFormat || x1.tickFormat(8);
