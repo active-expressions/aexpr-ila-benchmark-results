@@ -359,6 +359,100 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 	});
 }
 
+function INTERPRETATION_VS_REWRITING(benchmarkData) {
+	benchmarkData = copyJson(benchmarkData);
+
+	let rewritingData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
+	let interpretationData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
+
+
+	// show medians and confidence intervals
+	let medianParent = document.getElementById(createChartParentAndReturnId());
+	medianParent.innerHTML = `
+<p>Rewriting vs Interpretation (varying #aexpr, 10 callbacks each):</p>
+ <table>
+  <tr>
+    <th>Size</th>
+    <th colspan="2">timing [ms]</th>
+    <th>relative slowdown</th>
+  </tr>
+  <tr>
+    <th></th>
+    <th>rewriting</th>
+    <th>interpretation</th>
+    <th>rewriting vs interpretation</th>
+  </tr>
+${rewritingData.map(rewritingDat => {
+		let name = rewritingDat[0];
+		let interpretationDat = interpretationData.find(dat => dat[0] === name);
+
+		return `<tr>
+    <td>${name}</td>
+    <td>${printMedian(rewritingDat)}</td>
+    <td>${printMedian(interpretationDat)}</td>
+    <td>${printRelativeSlowdown(rewritingDat, interpretationDat)}</td>
+  </tr>`;
+	}).join('')}
+</table>
+`;
+
+	// normalize data
+	let data = [];
+	interpretationData.forEach(interpretationDat => {
+		let name = interpretationDat[0];
+		let median = d3.median(interpretationDat[1]);
+		let rewritingDat = rewritingData.find(dat => dat[0] === name);
+
+		interpretationDat[0] += 'interpret';
+		interpretationDat[1] = interpretationDat[1].map(val => val / median);
+		rewritingDat[0] += 'rewrite';
+		rewritingDat[1] = rewritingDat[1].map(val => val / median);
+
+		data.push(interpretationDat, rewritingDat);
+	});
+
+	boxPlot(data.slice(-2*6), {
+		id: createChartParentAndReturnId(),
+		title: 'Rewriting vs Interpretation (Normalized to Interpretation)',
+		benchName: 'Benchmark Size / Implementation Strategy',
+		yAxisText: 'Normalized Execution Time (Interpretation = 1.0)',
+		min:0,
+		max:3
+	});
+}
+
+function REWRITING_IMPACT(benchmarkData) {
+	benchmarkData = copyJson(benchmarkData);
+
+	let data = getSuiteData(benchmarkData, ['Rewriting Transformation Impact']),
+		baselineDat = data.find(dat => dat[0] === 'Baseline'),
+		rewritingDat = data.find(dat => dat[0] === 'Rewriting'),
+		baselineMedian = d3.median(baselineDat[1]);
+
+	// show medians and confidence intervals
+	let medianParent = document.getElementById(createChartParentAndReturnId());
+	medianParent.innerHTML = `
+<p>Rewriting Transformation Impact (sorting a 10000 element array using quicksort)</p>
+<ul> timing [ms]
+  <li>Baseline: ${printMedian(baselineDat)}</li>
+  <li>Rewriting: ${printMedian(rewritingDat)}</li>
+Slowdown (Rewriting vs Baseline): ${printRelativeSlowdown(rewritingDat, baselineDat)}
+</ul>
+`;
+
+	// normalize data
+	data.forEach(dat => {
+		dat[1] = dat[1].map(val => val / baselineMedian);
+	});
+
+	boxPlot(data, {
+		id: createChartParentAndReturnId(),
+		title: 'Rewriting Impact',
+		benchName: 'Implementation Strategy',
+		yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
+	});
+}
+
 function withIgnoreErrors(cb) {
     try {
         cb();
@@ -374,6 +468,15 @@ function doChartsFromJson(json) {
 
     resetAndBuildInfo(benchmarkData);
 
+	withIgnoreErrors(() => {
+		INTERPRETATION_VS_REWRITING(benchmarkData);
+		chartForSuite(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
+		chartForSuite(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
+	});
+	withIgnoreErrors(() => {
+		REWRITING_IMPACT(benchmarkData);
+		chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
+	});
     withIgnoreErrors(() => {
         AEXPR_CONSTRUCTION_CHART(benchmarkData);
         chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
@@ -385,40 +488,57 @@ function doChartsFromJson(json) {
     });
     chartForSuite(benchmarkData, ['Partially Rewritten']);
     chartForSuite(benchmarkData, ['Partially Wrapped']);
-	chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
-	chartForSuite(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
-	chartForSuite(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
 }
-
-d3.json("../active-expressions-benchmark/results/latest.json", (error, json) => {
-	if(!error) {
-		doChartsFromJson(json)
-	} else {
-		console.warn('fallback to latest ci benchmark');
-		d3.json("benchmarks/latest.json", doChartsFromJson);
-	}
-});
-
 
 /*
  * HISTORY
  */
 let history = document.getElementById('history');
 history.classList.add('clearfix');
+
+function createHistoryBox(tooltip = 'bench') {
+	let historyBox = document.createElement('div');
+	historyBox.classList.add('tooltip');
+	historyBox.setAttribute("data-tooltip", tooltip);
+	history.insertBefore(historyBox, history.firstChild);
+
+	return historyBox;
+}
+
+function historyBoxLoaded(historyBox, json) {
+	historyBox.classList.add('loaded');
+	historyBox.onclick = () => doChartsFromJson(json);
+}
+
+d3.json("../active-expressions-benchmark/results/latest.json", (error, json) => {
+	if(!error) {
+		doChartsFromJson(json);
+
+		for(let i = 1; i <= 100; i++) {
+			let file = `../active-expressions-benchmark/results/latest${i}.json`;
+			let historyBox = createHistoryBox(file);
+
+			d3.json(file, json => {
+				// update the square visially to reflect the fact that it is ready
+				historyBoxLoaded(historyBox, json);
+			});
+		}
+	} else {
+		console.warn('fallback to latest ci benchmark');
+		d3.json("benchmarks/latest.json", doChartsFromJson);
+	}
+});
+
 fetch('benchmarks/results')
 	.then(resp => resp.text())
 	.then(t => {
 		let files = t.match(/[^\r\n]+/g);
 		files.forEach(file => {
-			let historyBox = document.createElement('div');
-			historyBox.classList.add('tooltip');
-			historyBox.setAttribute("data-tooltip", file);
-			history.insertBefore(historyBox, history.firstChild);
+			let historyBox = createHistoryBox(file);
 
 			d3.json('benchmarks/history/' + file, json => {
 				// update the square visially to reflect the fact that it is ready
-				historyBox.classList.add('loaded');
-				historyBox.onclick = () => doChartsFromJson(json);
+				historyBoxLoaded(historyBox, json);
 			});
 		});
 	});
