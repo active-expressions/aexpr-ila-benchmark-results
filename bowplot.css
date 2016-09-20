@@ -9,7 +9,7 @@ body {
 .box line,
 .box rect,
 .box circle {
-    fill: steelblue;
+    fill: white;
     stroke: #000;
     stroke-width: 1px;
 }
@@ -21,6 +21,12 @@ body {
 .box .outlier {
     fill: none;
     stroke: #000;
+}
+
+line.median {
+    stroke: red;
+    stroke-width: 2px;
+    stroke-linecap: round;
 }
 
 .axis {
