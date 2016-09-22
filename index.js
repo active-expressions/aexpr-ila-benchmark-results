@@ -553,13 +553,16 @@ function createHistoryBox(tooltip = 'bench', parent) {
 	return historyBox;
 }
 
-function historyBoxLoaded(historyBox, json) {
-	historyBox.classList.add('loaded');
-	historyBox.onclick = () => doChartsFromJson(json);
-}
-
-function historyBoxFailed(historyBox) {
-	historyBox.classList.add('failed');
+function initializeHistoryBox(historyBox) {
+    return (error, json) => {
+        // update the square visually to reflect the fact that it is ready
+        if(!error) {
+            historyBox.classList.add('loaded');
+            historyBox.onclick = () => doChartsFromJson(json);
+        } else {
+            historyBox.classList.add('failed');
+        }
+    };
 }
 
 d3.json("benchmarks/latest.json", doChartsFromJson);
@@ -571,14 +574,7 @@ function paperBenchmark(label, directory) {
 		let filePath = `benchmarks/paper_aeabbbfrm/${directory}/${fileName}`;
 		let historyBox = createHistoryBox(fileName, history);
 
-		d3.json(filePath, (error, json) => {
-			// update the square visially to reflect the fact that it is ready
-			if(!error) {
-				historyBoxLoaded(historyBox, json);
-			} else {
-				historyBoxFailed(historyBox)
-			}
-		});
+		d3.json(filePath, initializeHistoryBox(historyBox));
 	}
 
 	for(let i = 1; i <= 100; i++) {
@@ -592,14 +588,7 @@ function paperOverviewBenchmark() {
 	let filePath = `benchmarks/paper_aeabbbfrm/overview.json`;
 	let historyBox = createHistoryBox('overview.json', history);
 
-	d3.json(filePath, (error, json) => {
-		// update the square visially to reflect the fact that it is ready
-		if(!error) {
-			historyBoxLoaded(historyBox, json);
-		} else {
-			historyBoxFailed(historyBox)
-		}
-	});
+	d3.json(filePath, initializeHistoryBox(historyBox));
 }
 
 paperOverviewBenchmark();
@@ -617,9 +606,6 @@ fetch('benchmarks/results')
 		files.forEach(file => {
 			let historyBox = createHistoryBox(file, history);
 
-			d3.json('benchmarks/history/' + file, (error, json) => {
-				// update the square visially to reflect the fact that it is ready
-				historyBoxLoaded(historyBox, json);
-			});
+			d3.json('benchmarks/history/' + file, initializeHistoryBox(historyBox));
 		});
 	});
