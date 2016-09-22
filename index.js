@@ -562,8 +562,7 @@ function historyBoxFailed(historyBox) {
 	historyBox.classList.add('failed');
 }
 
-
-d3.json("benchmarks/paper_aeabbbfrm/rewriting_impact/result.json", doChartsFromJson);
+d3.json("benchmarks/latest.json", doChartsFromJson);
 
 // Benchmarks for paper: Active Expressions as basic Building Block for Reactive Mechanisms
 function paperBenchmark(label, directory) {
