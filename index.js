@@ -562,22 +562,8 @@ function historyBoxFailed(historyBox) {
 	historyBox.classList.add('failed');
 }
 
-/*
-d3.json("../active-expressions-benchmark/results/latest.json", (error, json) => {
-	if(!error) {
-		doChartsFromJson(json);
-
-	} else {
-		console.warn('fallback to latest ci benchmark');
-		d3.json("benchmarks/latest.json", doChartsFromJson);
-	}
-});
-*/
 
 d3.json("benchmarks/paper_aeabbbfrm/rewriting_impact/result.json", doChartsFromJson);
-//d3.json("benchmarks/paper_aeabbbfrm/rewriting_vs_interpretation/latest.json", doChartsFromJson);
-//d3.json("benchmarks/paper_aeabbbfrm/rewriting_vs_interpretation/latest.json", doChartsFromJson);
-//d3.json("benchmarks/paper_aeabbbfrm/rewriting_vs_interpretation/latest.json", doChartsFromJson);
 
 // Benchmarks for paper: Active Expressions as basic Building Block for Reactive Mechanisms
 function paperBenchmark(label, directory) {
@@ -602,6 +588,22 @@ function paperBenchmark(label, directory) {
 	historyBoxFor('result.json');
 }
 
+function paperOverviewBenchmark() {
+	let history = createHistory('Paper Benchmark (Overview)');
+	let filePath = `benchmarks/paper_aeabbbfrm/overview.json`;
+	let historyBox = createHistoryBox('overview.json', history);
+
+	d3.json(filePath, (error, json) => {
+		// update the square visially to reflect the fact that it is ready
+		if(!error) {
+			historyBoxLoaded(historyBox, json);
+		} else {
+			historyBoxFailed(historyBox)
+		}
+	});
+}
+
+paperOverviewBenchmark();
 paperBenchmark('AExpr Construction', 'construction');
 paperBenchmark('AExpr Update', 'update');
 paperBenchmark('Rewriting Impact', 'rewriting_impact');
