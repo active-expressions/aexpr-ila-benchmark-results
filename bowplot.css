@@ -23,6 +23,13 @@ body {
     stroke: #000;
 }
 
+.box .separator line {
+    stroke: #afafaf;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-dasharray: 1, 5;
+}
+
 line.median {
     stroke: red;
     stroke-width: 2px;

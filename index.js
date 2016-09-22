@@ -28,12 +28,12 @@ function boxPlot(data, {
 
 	// the x-axis
 	var x = d3.scale.ordinal()
-		.domain( data.map(function(d) { console.log(d); return d[0] } ) )
+		.domain(data.map(d => d[0]))
 		.rangeRoundBands([0 , width], 0.7, 0.3);
 
 	var xAxis = d3.svg.axis()
 		.scale(x)
-		.orient("bottom")
+		.orient("bottom");
 
 	// the y-axis
 	var y = d3.scale.linear()
@@ -74,10 +74,12 @@ function boxPlot(data, {
 		.style("font-size", "16px")
 		.text(yAxisText);
 
+	var xAxisOffset = 10;
+	var xAxisPosition = height  + margin.top + xAxisOffset;
 	// draw x axis
 	var xxxAxis = svg.append("g")
 		.attr("class", "x axis")
-		.attr("transform", "translate(0," + (height  + margin.top + 10) + ")")
+		.attr("transform", "translate(0," + xAxisPosition + ")")
 		.call(xAxis);
 /*    xxxAxis.selectAll("text")
         .attr("y", 0)
@@ -93,6 +95,53 @@ function boxPlot(data, {
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
 		.text(benchName);
+
+    // ############################################################################
+
+	var x2 = d3.scale.ordinal()
+		.domain(data.map(d => d[0]))
+
+    function make_x_axis() {
+        return d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+    }
+
+    function make_y_axis() {
+        return d3.svg.axis()
+            .scale(y)
+            .orient("left")
+            .ticks(5)
+    }
+
+	var numberOfElementsPerChunk = 2;
+	// separator
+    svg.append("g")
+        .attr("class", "separator")
+        .attr("transform", `translate(${(x.range()[numberOfElementsPerChunk] - x.range()[0]) / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
+        .call(make_x_axis()
+            .tickSize(-(height + xAxisOffset), 0, 0)
+            .tickFormat("")
+        );
+
+	// horizontal lines
+    svg.append("g")
+        .attr("class", "grid")
+        .call(make_y_axis()
+            .tickSize(-width, 0, 0)
+            .tickFormat("")
+        )
+return;
+
+    var separatorLines = svg.append("g")
+        .selectAll('.separator')
+        .data(data)
+        .enter().append("line")
+        .attr("class", "divide")
+        .attr("y1", 100)
+        .attr("y2", 200)
+        .attr("x1", function(d) { return x(d); })
+        .attr("x2", function(d) { return 400; });
 }
 
 // Returns a function to compute the interquartile range.
