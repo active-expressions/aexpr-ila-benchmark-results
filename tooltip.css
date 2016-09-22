@@ -6,7 +6,7 @@
 .tooltip:after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 130%;
+    bottom: 100%;
     left: 20%;
     background: #ffcb66;
     padding: 5px 15px;

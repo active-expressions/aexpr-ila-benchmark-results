@@ -1,5 +1,13 @@
 var labels = true; // show the text labels beside individual boxplots?
 
+// show labels checkbox
+var showLabelsId = 'showLabels';
+(() => {
+	let container = document.createElement('div');
+	container.innerHTML = `<label> <input id="${showLabelsId}" type="checkbox" name="zutat" value="salami" checked> Show Labels </label><br /><br />`;
+	document.body.insertBefore(container, document.getElementById('info'));
+})();
+
 function boxPlot(data, {
 	id,
 	title,
@@ -8,9 +16,9 @@ function boxPlot(data, {
 	)), Infinity),
 	max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity),
-	margin = {top: 30, right: 50, bottom: 70, left: 60},
+	margin = {top: 30, right: 50, bottom: 100, left: 60},
 	width = 800 - margin.left - margin.right,
-	height = 400 - margin.top - margin.bottom,
+	height = 450 - margin.top - margin.bottom,
 	yAxisText = "Execution Time in ms",
 	numberOfElementsPerChunk = 0,
 	yTickCount = 4
@@ -19,7 +27,7 @@ function boxPlot(data, {
 		.whiskers(iqr(1.5))
 		.height(height)
 		.domain([min, max])
-		.showLabels(labels);
+		.showLabels(document.getElementById(showLabelsId).checked);
 
 	var svg = d3.select('#' + id).append("svg")
 		.attr("width", width + margin.left + margin.right)
@@ -28,12 +36,14 @@ function boxPlot(data, {
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-	// the x-axis
-	var x = d3.scale.ordinal()
-		.domain(data.map(d => d[0]))
-		.rangeRoundBands([0, width], 0.7, 0.3);
+    // the x-axis
+    var x = d3.scale.ordinal()
+        .domain(data.map(d => d[0]))
+        .rangeRoundBands([0, width], 0.7, 0.3);
+	var xAxisLabelScale = x.copy()
+        .rangeRoundBands([0, width], 0.1, 0.05);
 
-	var xAxis = d3.svg.axis()
+    var xAxis = d3.svg.axis()
 		.scale(x)
 		.orient("bottom");
 
@@ -46,7 +56,42 @@ function boxPlot(data, {
 		.scale(y)
 		.orient("left");
 
-	// draw the boxplots
+	var xAxisOffset = 10;
+	var xAxisPosition = height + margin.top + xAxisOffset;
+
+	// separator
+    if(numberOfElementsPerChunk > 0) {
+        function make_x_axis() {
+            return d3.svg.axis()
+                .scale(x)
+                .orient("bottom");
+        }
+
+        svg.append("g")
+            .attr("class", "separator")
+            .attr("transform", `translate(${(x.range()[1] - x.range()[0]) * numberOfElementsPerChunk / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
+            .call(make_x_axis()
+                .tickSize(-(height + xAxisOffset), 0, 0)
+                .tickFormat("")
+            );
+    }
+
+    // horizontal lines
+    function make_y_axis() {
+        return d3.svg.axis()
+            .scale(y)
+            .orient("left")
+            .ticks(yTickCount)
+    }
+
+    svg.append("g")
+        .attr("class", "tickLines")
+        .call(make_y_axis()
+            .tickSize(-width, 0, 0)
+            .tickFormat("")
+        );
+
+    // draw the boxplots
 	svg.selectAll(".box")
 		.data(data)
 		.enter().append("g")
@@ -78,20 +123,50 @@ function boxPlot(data, {
 		.style("font-size", "16px")
 		.text(yAxisText);
 
-	var xAxisOffset = 10;
-	var xAxisPosition = height + margin.top + xAxisOffset;
+	// wrapping long labels: https://bl.ocks.org/mbostock/7555321
+    function wrap(text, width) {
+        text.each(function() {
+            var text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word,
+                line = [],
+                lineNumber = 0,
+                lineHeight = 1.1, // ems
+                y = text.attr("y"),
+                dy = parseFloat(text.attr("dy")),
+                tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+            while (word = words.pop()) {
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > width) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+            }
+        });
+    }
+
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + xAxisPosition + ")")
+        .call(xAxis)
+        .selectAll("text")
+        .call(wrap, xAxisLabelScale.rangeBand());
+
+/*
 	// draw x axis
 	var xxxAxis = svg.append("g")
 		.attr("class", "x axis")
 		.attr("transform", "translate(0," + xAxisPosition + ")")
 		.call(xAxis);
-	/*    xxxAxis.selectAll("text")
-	 .attr("y", 0)
-	 .attr("x", -7)
-	 .attr("dy", ".35em")
-	 .attr("transform", "rotate(-90)")
-	 .style("text-anchor", "end");
-	 */
+	//xxxAxis.selectAll("text")
+	//  .attr("y", 0)
+	//  .attr("x", -7)
+	//  .attr("dy", ".35em")
+	//  .attr("transform", "rotate(-90)")
+	//  .style("text-anchor", "end");
 	xxxAxis.append("text")             // text label for the x axis
 		.attr("x", (width / 2))
 		.attr("y", 20)
@@ -99,38 +174,7 @@ function boxPlot(data, {
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
 		.text(benchName);
-
-	// separator
-	if(numberOfElementsPerChunk > 0) {
-		function make_x_axis() {
-			return d3.svg.axis()
-				.scale(x)
-				.orient("bottom");
-		}
-
-		svg.append("g")
-			.attr("class", "separator")
-			.attr("transform", `translate(${(x.range()[1] - x.range()[0]) * numberOfElementsPerChunk / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
-			.call(make_x_axis()
-				.tickSize(-(height + xAxisOffset), 0, 0)
-				.tickFormat("")
-			);
-	}
-
-	function make_y_axis() {
-		return d3.svg.axis()
-			.scale(y)
-			.orient("left")
-			.ticks(yTickCount)
-	}
-
-	// horizontal lines
-    svg.append("g")
-        .attr("class", "tickLines")
-        .call(make_y_axis()
-            .tickSize(-width, 0, 0)
-            .tickFormat("")
-        );
+*/
 }
 
 // Returns a function to compute the interquartile range.
@@ -443,9 +487,9 @@ ${rewritingData.map(rewritingDat => {
 		let median = d3.median(interpretationDat[1]);
 		let rewritingDat = rewritingData.find(dat => dat[0] === name);
 
-		interpretationDat[0] += 'interpret';
+		interpretationDat[0] = interpretationDat[0].split(' ')[0] +', interpret.';
 		interpretationDat[1] = interpretationDat[1].map(val => val / median);
-		rewritingDat[0] += 'rewrite';
+		rewritingDat[0] = rewritingDat[0].split(' ')[0] + ', rewriting';
 		rewritingDat[1] = rewritingDat[1].map(val => val / median);
 
 		data.push(interpretationDat, rewritingDat);
@@ -565,7 +609,8 @@ function initializeHistoryBox(historyBox) {
     };
 }
 
-d3.json("benchmarks/latest.json", doChartsFromJson);
+//d3.json("benchmarks/latest.json", doChartsFromJson);
+d3.json('benchmarks/paper_aeabbbfrm/overview.json', doChartsFromJson);
 
 // Benchmarks for paper: Active Expressions as basic Building Block for Reactive Mechanisms
 function paperBenchmark(label, directory) {
