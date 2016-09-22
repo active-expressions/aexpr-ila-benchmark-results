@@ -35,7 +35,7 @@
 .clearfix:after {
     visibility: hidden;
     display: block;
-    font-size: 0;
+    font-size: -3;
     content: " ";
     clear: both;
     height: 0;
@@ -45,3 +45,7 @@
 * html .clearfix { height: 1%; }
 .clearfix { display: block; }
 /* End hide from IE-mac */
+
+.tooltip:hover {
+    z-index:1
+}
