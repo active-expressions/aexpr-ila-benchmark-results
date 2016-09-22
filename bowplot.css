@@ -28,7 +28,16 @@ body {
     stroke-width: 1;
     stroke-linecap: round;
     stroke-dasharray: 1, 5;
+    shape-rendering: crispEdges;
 }
+
+.box .tickLines line {
+    stroke: #afafaf;
+    stroke-width: 1;
+    stroke-linecap: round;
+/*    stroke-dasharray: 1, 5;
+    shape-rendering: crispEdges;
+*/}
 
 line.median {
     stroke: red;

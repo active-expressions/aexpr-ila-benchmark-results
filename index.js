@@ -11,7 +11,9 @@ function boxPlot(data, {
 	margin = {top: 30, right: 50, bottom: 70, left: 60},
 	width = 800 - margin.left - margin.right,
 	height = 400 - margin.top - margin.bottom,
-	yAxisText = "Execution Time in ms"
+	yAxisText = "Execution Time in ms",
+	numberOfElementsPerChunk = 0,
+	yTickCount = 4
 }) {
 	var chart = d3.box()
 		.whiskers(iqr(1.5))
@@ -29,7 +31,7 @@ function boxPlot(data, {
 	// the x-axis
 	var x = d3.scale.ordinal()
 		.domain(data.map(d => d[0]))
-		.rangeRoundBands([0 , width], 0.7, 0.3);
+		.rangeRoundBands([0, width], 0.7, 0.3);
 
 	var xAxis = d3.svg.axis()
 		.scale(x)
@@ -48,7 +50,9 @@ function boxPlot(data, {
 	svg.selectAll(".box")
 		.data(data)
 		.enter().append("g")
-		.attr("transform", function(d) { return "translate(" +  x(d[0])  + "," + margin.top + ")"; } )
+		.attr("transform", function (d) {
+			return "translate(" + x(d[0]) + "," + margin.top + ")";
+		})
 		.call(chart.width(x.rangeBand()));
 
 
@@ -66,8 +70,8 @@ function boxPlot(data, {
 		.attr("class", "y axis")
 		.call(yAxis)
 		.append("text") // and text1
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height/2)
+		.attr("transform", "rotate(-90)")
+		.attr("x", -height / 2)
 		.attr("y", -55)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
@@ -75,73 +79,58 @@ function boxPlot(data, {
 		.text(yAxisText);
 
 	var xAxisOffset = 10;
-	var xAxisPosition = height  + margin.top + xAxisOffset;
+	var xAxisPosition = height + margin.top + xAxisOffset;
 	// draw x axis
 	var xxxAxis = svg.append("g")
 		.attr("class", "x axis")
 		.attr("transform", "translate(0," + xAxisPosition + ")")
 		.call(xAxis);
-/*    xxxAxis.selectAll("text")
-        .attr("y", 0)
-        .attr("x", -7)
-        .attr("dy", ".35em")
-        .attr("transform", "rotate(-90)")
-        .style("text-anchor", "end");
-*/
-		xxxAxis.append("text")             // text label for the x axis
-		.attr("x", (width / 2) )
-		.attr("y",  20 )
+	/*    xxxAxis.selectAll("text")
+	 .attr("y", 0)
+	 .attr("x", -7)
+	 .attr("dy", ".35em")
+	 .attr("transform", "rotate(-90)")
+	 .style("text-anchor", "end");
+	 */
+	xxxAxis.append("text")             // text label for the x axis
+		.attr("x", (width / 2))
+		.attr("y", 20)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
 		.text(benchName);
 
-    // ############################################################################
-
-	var x2 = d3.scale.ordinal()
-		.domain(data.map(d => d[0]))
-
-    function make_x_axis() {
-        return d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
-    }
-
-    function make_y_axis() {
-        return d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .ticks(5)
-    }
-
-	var numberOfElementsPerChunk = 2;
 	// separator
-    svg.append("g")
-        .attr("class", "separator")
-        .attr("transform", `translate(${(x.range()[numberOfElementsPerChunk] - x.range()[0]) / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
-        .call(make_x_axis()
-            .tickSize(-(height + xAxisOffset), 0, 0)
-            .tickFormat("")
-        );
+	if(numberOfElementsPerChunk > 0) {
+		function make_x_axis() {
+			return d3.svg.axis()
+				.scale(x)
+				.orient("bottom");
+		}
+
+		svg.append("g")
+			.attr("class", "separator")
+			.attr("transform", `translate(${(x.range()[numberOfElementsPerChunk] - x.range()[0]) / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
+			.call(make_x_axis()
+				.tickSize(-(height + xAxisOffset), 0, 0)
+				.tickFormat("")
+			);
+	}
+
+	function make_y_axis() {
+		return d3.svg.axis()
+			.scale(y)
+			.orient("left")
+			.ticks(yTickCount)
+	}
 
 	// horizontal lines
     svg.append("g")
-        .attr("class", "grid")
+        .attr("class", "tickLines")
         .call(make_y_axis()
             .tickSize(-width, 0, 0)
             .tickFormat("")
-        )
-return;
-
-    var separatorLines = svg.append("g")
-        .selectAll('.separator')
-        .data(data)
-        .enter().append("line")
-        .attr("class", "divide")
-        .attr("y1", 100)
-        .attr("y2", 200)
-        .attr("x1", function(d) { return x(d); })
-        .attr("x2", function(d) { return 400; });
+        );
 }
 
 // Returns a function to compute the interquartile range.
@@ -305,7 +294,8 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 		max: 10,//tickingAndRewritingMax,
 		margin,
 		width,
-		height
+		height,
+		numberOfElementsPerChunk: 2
 	});
 
 	let margin2 = {top: 30, right: 50, bottom: 70, left: 60},
@@ -319,7 +309,8 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 		max: 1000,//interpretationMax,
 		margin: margin2,
 		width: width2,
-		height: height2
+		height: height2,
+		numberOfElementsPerChunk: 2
 	});
 }
 
@@ -466,7 +457,8 @@ ${rewritingData.map(rewritingDat => {
 		benchName: 'Benchmark Size / Implementation Strategy',
 		yAxisText: 'Normalized Execution Time (Interpretation = 1.0)',
 		min:0,
-		max:3
+		max:3,
+		numberOfElementsPerChunk: 2
 	});
 }
 
@@ -559,6 +551,7 @@ function historyBoxLoaded(historyBox, json) {
 	historyBox.onclick = () => doChartsFromJson(json);
 }
 
+/*
 d3.json("../active-expressions-benchmark/results/latest.json", (error, json) => {
 	if(!error) {
 		doChartsFromJson(json);
@@ -577,6 +570,9 @@ d3.json("../active-expressions-benchmark/results/latest.json", (error, json) => 
 		d3.json("benchmarks/latest.json", doChartsFromJson);
 	}
 });
+*/
+
+d3.json("benchmarks/paper_aeabbbfrm/results-rewriting_vs_interpretation/latest.json", doChartsFromJson);
 
 fetch('benchmarks/results')
 	.then(resp => resp.text())
