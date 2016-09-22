@@ -1,25 +1,32 @@
 
-#history {
-    border: 2px solid steelblue;
-    background-color: gray;
+.history {
+    border: 2px solid darkgrey;
+    background-color: lightgrey;
 
     clear: both;
     overflow-wrap: normal;
     overflow: visible; /*hidden*/
 }
 
-#history div {
+.history div {
     float: left;
     width: 20px;
     height: 20px;
-    border: 2px solid steelblue;
-    background-color: gray;
     margin: 5px;
+
+    border: 2px solid darkgray;
+    background-color: yellow;
+    cursor: wait;
 }
 
-#history div.loaded {
-    background-color: blueviolet;
+.history div.loaded {
+    background-color: green;
     cursor: pointer;
+}
+
+.history div.failed {
+    background-color: red;
+    cursor: not-allowed;
 }
 
 /*
