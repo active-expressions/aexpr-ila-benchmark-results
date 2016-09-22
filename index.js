@@ -110,7 +110,7 @@ function boxPlot(data, {
 
 		svg.append("g")
 			.attr("class", "separator")
-			.attr("transform", `translate(${(x.range()[numberOfElementsPerChunk] - x.range()[0]) / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
+			.attr("transform", `translate(${(x.range()[1] - x.range()[0]) * numberOfElementsPerChunk / 2}, ${xAxisPosition}), scale(${numberOfElementsPerChunk},1)`)
 			.call(make_x_axis()
 				.tickSize(-(height + xAxisOffset), 0, 0)
 				.tickFormat("")
