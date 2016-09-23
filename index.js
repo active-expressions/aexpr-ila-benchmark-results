@@ -265,10 +265,18 @@ function minMaxThenCreateChart() {
 }
 
 function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
+    let unnormalizedDataCopy = copyJson(benchmarkData);
 	let dataDiff = getSuiteData(benchmarkData, ['AExpr Construction', 'Different Object']),
 		dataSame = getSuiteData(benchmarkData, ['AExpr Construction', 'Same Object']);
 
-	// medians, etc.
+    if(dataDiff.length + dataSame.length === 0) {
+        createFailureMessage(`
+<p>Unable to load Suite 'AExpr Construction': No Measurements available</p>
+`);
+        return;
+    }
+
+    // medians, etc.
 	let tickingDiff = dataDiff.find(dat => dat[0] === 'Ticking');
 	let interpretationDiff = dataDiff.find(dat => dat[0] === 'Interpretation');
 	let rewritingDiff = dataDiff.find(dat => dat[0] === 'Rewriting');
@@ -356,6 +364,9 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 		height: height2,
 		numberOfElementsPerChunk: 2
 	});
+
+    chartForSuite(unnormalizedDataCopy, ['AExpr Construction', 'Different Object']);
+    chartForSuite(unnormalizedDataCopy, ['AExpr Construction', 'Same Object']);
 }
 
 function ratioWithConfidenceIntervals(a, b) {
@@ -403,9 +414,18 @@ function printRelativeSlowdown(benchData, referenceData) {
 
 function AEXPR_UPDATE_CHART(benchmarkData) {
 	benchmarkData = copyJson(benchmarkData);
+    let unnormalizedDataCopy = copyJson(benchmarkData);
 
 	let data = getSuiteData(benchmarkData, ['Maintain Aspect Ratio']);
-	let baseline = data.find(dat => dat[0] === 'Baseline');
+
+    if(data.length === 0) {
+        createFailureMessage(`
+<p>Unable to load Suite 'AExpr Update': No Measurements available</p>
+`);
+        return;
+    }
+
+    let baseline = data.find(dat => dat[0] === 'Baseline');
 	let baselineMedian = d3.median(baseline[1]);
 
 	// calculate medians and confidence intervals
@@ -441,16 +461,26 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 		benchName: 'Implementation Strategy',
 		yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
 	});
+
+    chartForSuite(unnormalizedDataCopy, ['Maintain Aspect Ratio']);
 }
 
 function INTERPRETATION_VS_REWRITING(benchmarkData) {
 	benchmarkData = copyJson(benchmarkData);
+    let rewritingDataCopy = copyJson(benchmarkData);
+    let interpretationDataCopy = copyJson(benchmarkData);
 
-	let rewritingData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
+    let rewritingData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
 	let interpretationData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
 
+    if(rewritingData.length + interpretationData.length === 0) {
+        createFailureMessage(`
+<p>Unable to load Suite 'Rewriting Transformation Impact': No Measurements available</p>
+`);
+        return;
+    }
 
-	// show medians and confidence intervals
+    // show medians and confidence intervals
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
 <p>Rewriting vs Interpretation (varying #aexpr, 10 callbacks each):</p>
@@ -489,6 +519,7 @@ ${rewritingData.map(rewritingDat => {
 
 		interpretationDat[0] = interpretationDat[0].split(' ')[0] +', interpret.';
 		interpretationDat[1] = interpretationDat[1].map(val => val / median);
+        if(!rewritingDat) { return; }
 		rewritingDat[0] = rewritingDat[0].split(' ')[0] + ', rewriting';
 		rewritingDat[1] = rewritingDat[1].map(val => val / median);
 
@@ -504,13 +535,25 @@ ${rewritingData.map(rewritingDat => {
 		max:3,
 		numberOfElementsPerChunk: 2
 	});
+
+    chartForSuite(rewritingDataCopy, ['AExpr and Callback Count (Rewriting)']);
+    chartForSuite(interpretationDataCopy, ['AExpr and Callback Count (Interpretation)']);
 }
 
 function REWRITING_IMPACT(benchmarkData) {
     benchmarkData = copyJson(benchmarkData);
+    let unnormalizedDataCopy = copyJson((benchmarkData));
 
-    let data = getSuiteData(benchmarkData, ['Rewriting Transformation Impact']),
-        baselineDat = data.find(dat => dat[0] === 'Baseline'),
+    let data = getSuiteData(benchmarkData, ['Rewriting Transformation Impact']);
+
+    if(data.length <= 1) {
+        createFailureMessage(`
+<p>Unable to load Suite 'Rewriting Transformation Impact': ${data.length} of 2 Measurements available</p>
+`);
+        return;
+    }
+
+    let baselineDat = data.find(dat => dat[0] === 'Baseline'),
         rewritingDat = data.find(dat => dat[0] === 'Rewriting'),
         baselineMedian = d3.median(baselineDat[1]);
 
@@ -536,6 +579,8 @@ Slowdown (Rewriting vs Baseline): ${printRelativeSlowdown(rewritingDat, baseline
         benchName: 'Implementation Strategy',
         yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
     });
+
+    chartForSuite(unnormalizedDataCopy, ['Rewriting Transformation Impact']);
 }
 
 function createFailureMessage(message) {
@@ -552,7 +597,7 @@ function PARTIALLY_REWRITTEN(benchmarkData) {
         chartForSuite(benchmarkData, suiteNames);
     } else {
         createFailureMessage(`
-<p>Unable to load Suite 'Partially Rewritten': ${data.length} of 11 Measurements available)</p>
+<p>Unable to load Suite 'Partially Rewritten': ${data.length} of 11 Measurements available</p>
 `);
     }
 }
@@ -565,7 +610,7 @@ function PARTIALLY_WRAPPED(benchmarkData) {
         chartForSuite(benchmarkData, suiteNames);
     } else {
         createFailureMessage(`
-<p>Unable to load Suite 'Partially Wrapped': ${data.length} of 11 Measurements available)</p>
+<p>Unable to load Suite 'Partially Wrapped': ${data.length} of 11 Measurements available</p>
 `);
     }
 }
@@ -587,21 +632,15 @@ function doChartsFromJson(json) {
 
 	withIgnoreErrors(() => {
 		INTERPRETATION_VS_REWRITING(benchmarkData);
-		chartForSuite(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
-		chartForSuite(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
 	});
 	withIgnoreErrors(() => {
 		REWRITING_IMPACT(benchmarkData);
-		chartForSuite(benchmarkData, ['Rewriting Transformation Impact']);
 	});
     withIgnoreErrors(() => {
         AEXPR_CONSTRUCTION_CHART(benchmarkData);
-        chartForSuite(benchmarkData, ['AExpr Construction', 'Different Object']);
-        chartForSuite(benchmarkData, ['AExpr Construction', 'Same Object']);
     });
     withIgnoreErrors(() => {
         AEXPR_UPDATE_CHART(benchmarkData);
-        chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
     });
     withIgnoreErrors(() => {
         PARTIALLY_REWRITTEN(benchmarkData);
