@@ -507,16 +507,16 @@ ${rewritingData.map(rewritingDat => {
 }
 
 function REWRITING_IMPACT(benchmarkData) {
-	benchmarkData = copyJson(benchmarkData);
+    benchmarkData = copyJson(benchmarkData);
 
-	let data = getSuiteData(benchmarkData, ['Rewriting Transformation Impact']),
-		baselineDat = data.find(dat => dat[0] === 'Baseline'),
-		rewritingDat = data.find(dat => dat[0] === 'Rewriting'),
-		baselineMedian = d3.median(baselineDat[1]);
+    let data = getSuiteData(benchmarkData, ['Rewriting Transformation Impact']),
+        baselineDat = data.find(dat => dat[0] === 'Baseline'),
+        rewritingDat = data.find(dat => dat[0] === 'Rewriting'),
+        baselineMedian = d3.median(baselineDat[1]);
 
-	// show medians and confidence intervals
-	let medianParent = document.getElementById(createChartParentAndReturnId());
-	medianParent.innerHTML = `
+    // show medians and confidence intervals
+    let medianParent = document.getElementById(createChartParentAndReturnId());
+    medianParent.innerHTML = `
 <p>Rewriting Transformation Impact (sorting a 10000 element array using quicksort)</p>
 <ul> timing [ms]
   <li>Baseline: ${printMedian(baselineDat)}</li>
@@ -525,17 +525,49 @@ Slowdown (Rewriting vs Baseline): ${printRelativeSlowdown(rewritingDat, baseline
 </ul>
 `;
 
-	// normalize data
-	data.forEach(dat => {
-		dat[1] = dat[1].map(val => val / baselineMedian);
-	});
+    // normalize data
+    data.forEach(dat => {
+        dat[1] = dat[1].map(val => val / baselineMedian);
+    });
 
-	boxPlot(data, {
-		id: createChartParentAndReturnId(),
-		title: 'Rewriting Impact',
-		benchName: 'Implementation Strategy',
-		yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
-	});
+    boxPlot(data, {
+        id: createChartParentAndReturnId(),
+        title: 'Rewriting Impact',
+        benchName: 'Implementation Strategy',
+        yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
+    });
+}
+
+function createFailureMessage(message) {
+    let medianParent = document.getElementById(createChartParentAndReturnId());
+    medianParent.classList.add('failedSuite');
+    medianParent.innerHTML = message;
+}
+
+function PARTIALLY_REWRITTEN(benchmarkData) {
+    const suiteNames = ['Partially Rewritten'];
+    let data = getSuiteData(benchmarkData, suiteNames);
+
+    if(data.length >= 11) {
+        chartForSuite(benchmarkData, suiteNames);
+    } else {
+        createFailureMessage(`
+<p>Unable to load Suite 'Partially Rewritten': ${data.length} of 11 Measurements available)</p>
+`);
+    }
+}
+
+function PARTIALLY_WRAPPED(benchmarkData) {
+    const suiteNames = ['Partially Wrapped'];
+    let data = getSuiteData(benchmarkData, suiteNames);
+
+    if(data.length >= 11) {
+        chartForSuite(benchmarkData, suiteNames);
+    } else {
+        createFailureMessage(`
+<p>Unable to load Suite 'Partially Wrapped': ${data.length} of 11 Measurements available)</p>
+`);
+    }
 }
 
 function withIgnoreErrors(cb) {
@@ -571,8 +603,12 @@ function doChartsFromJson(json) {
         AEXPR_UPDATE_CHART(benchmarkData);
         chartForSuite(benchmarkData, ['Maintain Aspect Ratio']);
     });
-    chartForSuite(benchmarkData, ['Partially Rewritten']);
-    chartForSuite(benchmarkData, ['Partially Wrapped']);
+    withIgnoreErrors(() => {
+        PARTIALLY_REWRITTEN(benchmarkData);
+    });
+    withIgnoreErrors(() => {
+        PARTIALLY_WRAPPED(benchmarkData);
+    });
 }
 
 /*
