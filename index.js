@@ -8,6 +8,8 @@ var showLabelsId = 'showLabels';
 	document.body.insertBefore(container, document.getElementById('info'));
 })();
 
+var defaultMargin = {top: 30, right: 10, bottom: 100, left: 60};
+
 function boxPlot(data, {
 	id,
 	title,
@@ -16,12 +18,13 @@ function boxPlot(data, {
 	)), Infinity),
 	max = data.reduce((acc, dat) => Math.max(acc, dat[1].reduce((acc, num) => Math.max(acc, num), -Infinity
 	)), -Infinity),
-	margin = {top: 30, right: 50, bottom: 100, left: 60},
+	margin = defaultMargin,
 	width = 800 - margin.left - margin.right,
 	height = 450 - margin.top - margin.bottom,
 	yAxisText = "Execution Time in ms",
 	numberOfElementsPerChunk = 0,
-	yTickCount = 4
+	yTickCount = 4,
+	xAxisLabelOffset = 50
 }) {
 	var chart = d3.box()
 		.whiskers(iqr(1.5))
@@ -116,7 +119,7 @@ function boxPlot(data, {
 		.call(yAxis)
 		.append("text") // and text1
 		.attr("transform", "rotate(-90)")
-		.attr("x", -height / 2)
+		.attr("x", -height / 2 - margin.bottom / 2)
 		.attr("y", -55)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
@@ -155,11 +158,10 @@ function boxPlot(data, {
         .selectAll("text")
         .call(wrap, xAxisLabelScale.rangeBand());
 
-/*
+	/*
 	// draw x axis
 	var xxxAxis = svg.append("g")
 		.attr("class", "x axis")
-		.attr("transform", "translate(0," + xAxisPosition + ")")
 		.call(xAxis);
 	//xxxAxis.selectAll("text")
 	//  .attr("y", 0)
@@ -167,13 +169,16 @@ function boxPlot(data, {
 	//  .attr("dy", ".35em")
 	//  .attr("transform", "rotate(-90)")
 	//  .style("text-anchor", "end");
-	xxxAxis.append("text")             // text label for the x axis
+	*/
+	svg.append("g").append("text")             // text label for the x axis
+		.attr("transform", "translate(0," + xAxisPosition + ")")
 		.attr("x", (width / 2))
-		.attr("y", 20)
+		.attr("y", xAxisLabelOffset)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
 		.style("font-size", "16px")
 		.text(benchName);
+/*
 */
 }
 
@@ -335,13 +340,23 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	interpretationMin = Math.min(tickingAndRewritingMin * scale, interpretationMin);
 	interpretationMax = Math.max(tickingAndRewritingMax * scale, interpretationMax);
 
-	let margin = {top: 30, right: 50, bottom: 70, left: 60},
+	// adjust names:
+    tickingAndRewritingData.concat(interpretationData).forEach(dat => {
+        dat[0] = dat[0]
+            .replace('Ticking', 'Ticking,')
+            .replace('Rewriting', 'Rewriting,')
+            .replace('Interpretation', 'Interpretation,');
+    });
+
+
+	let benchName = 'Implementation Strategy, Configuration',
+        margin = Object.assign({}, defaultMargin, {top: 10}),
 		width = 600 - margin.left - margin.right,
 		height = 400 - margin.top - margin.bottom;
 	boxPlot(tickingAndRewritingData, {
 		id: createChartParentAndReturnId(),
-		title: 'AExpr Construction (create 1000 AExprs)',
-		benchName: '-',
+		title: '',
+		benchName,
 		min: 0,//tickingAndRewritingMin,
 		max: 10,//tickingAndRewritingMax,
 		margin,
@@ -350,14 +365,14 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 		numberOfElementsPerChunk: 2
 	});
 
-	let margin2 = {top: 30, right: 50, bottom: 70, left: 60},
-		width2 = 400 - margin2.left - margin2.right,
+	let margin2 = Object.assign({}, defaultMargin, {top: 10}),
+		width2 = 335 - margin2.left - margin2.right,
 		height2 = 400 - margin2.top - margin2.bottom;
 	boxPlot(interpretationData, {
 		id: createChartParentAndReturnId(),
-		title: 'AExpr Construction (create 1000 AExprs)',
-		benchName: '-',
-		min: 0,//interpretationMin,
+		title: '',
+		benchName,
+        min: 0,//interpretationMin,
 		max: 1000,//interpretationMax,
 		margin: margin2,
 		width: width2,
@@ -457,10 +472,11 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 
 	boxPlot(data, {
 		id: createChartParentAndReturnId(),
-		title: 'AExpr Update (Normalized to baseline)',
+        title: '',
 		benchName: 'Implementation Strategy',
-		yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
-	});
+		yAxisText: 'Normalized Execution Time (Baseline = 1.0)',
+        margin: Object.assign({}, defaultMargin, {top: 10})
+    });
 
     chartForSuite(unnormalizedDataCopy, ['Maintain Aspect Ratio']);
 }
@@ -528,12 +544,13 @@ ${rewritingData.map(rewritingDat => {
 
 	boxPlot(data.slice(-2*6), {
 		id: createChartParentAndReturnId(),
-		title: 'Rewriting vs Interpretation (Normalized to Interpretation)',
+		title: '',
 		benchName: 'Benchmark Size / Implementation Strategy',
 		yAxisText: 'Normalized Execution Time (Interpretation = 1.0)',
 		min:0,
 		max:3,
-		numberOfElementsPerChunk: 2
+		numberOfElementsPerChunk: 2,
+        margin: Object.assign({}, defaultMargin, {top: 10})
 	});
 
     chartForSuite(rewritingDataCopy, ['AExpr and Callback Count (Rewriting)']);
@@ -573,11 +590,17 @@ Slowdown (Rewriting vs Baseline): ${printRelativeSlowdown(rewritingDat, baseline
         dat[1] = dat[1].map(val => val / baselineMedian);
     });
 
+    let margin = Object.assign({}, defaultMargin, {top: 10}),
+        width = 335 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
     boxPlot(data, {
         id: createChartParentAndReturnId(),
-        title: 'Rewriting Impact',
+        title: '',
         benchName: 'Implementation Strategy',
-        yAxisText: 'Normalized Execution Time (Baseline = 1.0)'
+        yAxisText: 'Normalized Execution Time (Baseline = 1.0)',
+        margin,
+        width,
+        height
     });
 
     chartForSuite(unnormalizedDataCopy, ['Rewriting Transformation Impact']);
