@@ -291,7 +291,7 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
-<p>AExpr Construction (create 1000 aexprs example):</p>
+<h2>AExpr Construction (create 1000 aexprs example):</h2>
 <ul> timing [ms]
   <li>ticking (same object): ${printMedian(tickingSame)}</li>
   <li>interpretation (same object): ${printMedian(interpretationSame)}</li>
@@ -451,7 +451,7 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 	// show medians and confidence intervals
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
-<p>AExpr update (maintain aspectRatio example):</p>
+<h2>AExpr update (maintain aspectRatio example):</h2>
 <ul> timing [ms]
   <li>baseline: ${printMedian(baseline)}</li>
   <li>ticking: ${printMedian(tickingData)}</li>
@@ -470,12 +470,17 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 		dat[1] = dat[1].map(val => val / baselineMedian);
 	});
 
+	let margin = Object.assign({}, defaultMargin, {top: 10}),
+		width = 600 - margin.left - margin.right,
+		height = 400 - margin.top - margin.bottom;
 	boxPlot(data, {
 		id: createChartParentAndReturnId(),
         title: '',
 		benchName: 'Implementation Strategy',
 		yAxisText: 'Normalized Execution Time (Baseline = 1.0)',
-        margin: Object.assign({}, defaultMargin, {top: 10})
+        margin,
+		width,
+		height
     });
 
     chartForSuite(unnormalizedDataCopy, ['Maintain Aspect Ratio']);
@@ -499,7 +504,7 @@ function INTERPRETATION_VS_REWRITING(benchmarkData) {
     // show medians and confidence intervals
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
-<p>Rewriting vs Interpretation (varying #aexpr, 10 callbacks each):</p>
+<h2>Rewriting vs Interpretation (varying #aexpr, 10 callbacks each):</h2>
  <table>
   <tr>
     <th>Size</th>
@@ -545,7 +550,7 @@ ${rewritingData.map(rewritingDat => {
 	boxPlot(data.slice(-2*6), {
 		id: createChartParentAndReturnId(),
 		title: '',
-		benchName: 'Benchmark Size / Implementation Strategy',
+		benchName: 'Benchmark Size, Implementation Strategy',
 		yAxisText: 'Normalized Execution Time (Interpretation = 1.0)',
 		min:0,
 		max:3,
@@ -577,7 +582,7 @@ function REWRITING_IMPACT(benchmarkData) {
     // show medians and confidence intervals
     let medianParent = document.getElementById(createChartParentAndReturnId());
     medianParent.innerHTML = `
-<p>Rewriting Transformation Impact (sorting a 10000 element array using quicksort)</p>
+<h2>Rewriting Transformation Impact (sorting a 10000 element array using quicksort)</h2>
 <ul> timing [ms]
   <li>Baseline: ${printMedian(baselineDat)}</li>
   <li>Rewriting: ${printMedian(rewritingDat)}</li>
@@ -654,17 +659,17 @@ function doChartsFromJson(json) {
     resetAndBuildInfo(benchmarkData);
 
 	withIgnoreErrors(() => {
-		INTERPRETATION_VS_REWRITING(benchmarkData);
+		AEXPR_CONSTRUCTION_CHART(benchmarkData);
+	});
+	withIgnoreErrors(() => {
+		AEXPR_UPDATE_CHART(benchmarkData);
 	});
 	withIgnoreErrors(() => {
 		REWRITING_IMPACT(benchmarkData);
 	});
-    withIgnoreErrors(() => {
-        AEXPR_CONSTRUCTION_CHART(benchmarkData);
-    });
-    withIgnoreErrors(() => {
-        AEXPR_UPDATE_CHART(benchmarkData);
-    });
+	withIgnoreErrors(() => {
+		INTERPRETATION_VS_REWRITING(benchmarkData);
+	});
     withIgnoreErrors(() => {
         PARTIALLY_REWRITTEN(benchmarkData);
     });
