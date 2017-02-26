@@ -123,7 +123,7 @@ function boxPlot(data, {
 		.attr("y", -55)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
-		.style("font-size", "16px")
+		.style("font-size", "18px")
 		.text(yAxisText);
 
 	// wrapping long labels: https://bl.ocks.org/mbostock/7555321
@@ -176,7 +176,7 @@ function boxPlot(data, {
 		.attr("y", xAxisLabelOffset)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
-		.style("font-size", "16px")
+		.style("font-size", "18px")
 		.text(benchName);
 /*
 */
@@ -232,7 +232,14 @@ function createChartParentAndReturnId() {
 
 function preprocessJson(json) {
     json = copyJson(json);
-    return json[Object.keys(json)[0]];
+
+    let benchmarkData = json[Object.keys(json)[0]];
+    // adjusts names according to the paper
+    function transformNames(json) {
+
+    }
+
+    return benchmarkData;
 }
 
 function getSuiteData(json, suiteNames) {
