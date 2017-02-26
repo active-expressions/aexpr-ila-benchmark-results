@@ -1,5 +1,9 @@
 var labels = true; // show the text labels beside individual boxplots?
 
+const TICKING_NAME = 'Convention',
+	INTERPRETATION_NAME = 'Interpretation',
+	REWRITING_NAME = 'Compilation';
+
 // show labels checkbox
 var showLabelsId = 'showLabels';
 (() => {
@@ -235,9 +239,25 @@ function preprocessJson(json) {
 
     let benchmarkData = json[Object.keys(json)[0]];
     // adjusts names according to the paper
-    function transformNames(json) {
+    function transformData(data) {
+    	const replaceMap = new Map();
+        replaceMap.set('Ticking', TICKING_NAME);
+        replaceMap.set('Interpretation', INTERPRETATION_NAME);
+        replaceMap.set('Rewriting', REWRITING_NAME);
 
+        function transformName(string) {
+        	replaceMap.forEach((replacer, matcher) => {
+        		string = string.replace(new RegExp(matcher, 'g'), replacer);
+			})
+        	return string;
+		}
+		console.log(data);
+		data.suites.forEach(suite => {
+			suite.suite = suite.suite.map(transformName);
+			suite.title.name = transformName(suite.title.name);
+		});
     }
+    transformData(benchmarkData);
 
     return benchmarkData;
 }
@@ -247,7 +267,7 @@ function getSuiteData(json, suiteNames) {
     var aspectRatios = suites
         .filter(suite => _.isEqual(suite.suite.slice(0, suiteNames.length), suiteNames))
         .map(suite => suite.title);
-        //.filter(bench => bench.name !== 'Rewriting');
+        //.filter(bench => bench.name !== 'Compilation');
 
     var data = aspectRatios
         .map(ar => [ar.name, ar.results.slice(-30)]);
@@ -289,34 +309,34 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
     }
 
     // medians, etc.
-	let tickingDiff = dataDiff.find(dat => dat[0] === 'Ticking');
+	let tickingDiff = dataDiff.find(dat => dat[0] === 'Convention');
 	let interpretationDiff = dataDiff.find(dat => dat[0] === 'Interpretation');
-	let rewritingDiff = dataDiff.find(dat => dat[0] === 'Rewriting');
-	let tickingSame = dataSame.find(dat => dat[0] === 'Ticking');
+	let rewritingDiff = dataDiff.find(dat => dat[0] === 'Compilation');
+	let tickingSame = dataSame.find(dat => dat[0] === 'Convention');
 	let interpretationSame = dataSame.find(dat => dat[0] === 'Interpretation');
-	let rewritingSame = dataSame.find(dat => dat[0] === 'Rewriting');
+	let rewritingSame = dataSame.find(dat => dat[0] === 'Compilation');
 
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
 <h2>AExpr Construction (create 1000 aexprs example):</h2>
 <ul> timing [ms]
-  <li>ticking (same object): ${printMedian(tickingSame)}</li>
-  <li>interpretation (same object): ${printMedian(interpretationSame)}</li>
-  <li>rewriting (same object): ${printMedian(rewritingSame)}</li>
-  <li>ticking (different objects): ${printMedian(tickingDiff)}</li>
-  <li>interpretation (different objects): ${printMedian(interpretationDiff)}</li>
-  <li>rewriting (different objects): ${printMedian(rewritingDiff)}</li>
+  <li>${TICKING_NAME} (same object): ${printMedian(tickingSame)}</li>
+  <li>Interpretation (same object): ${printMedian(interpretationSame)}</li>
+  <li>Compilation (same object): ${printMedian(rewritingSame)}</li>
+  <li>${TICKING_NAME} (different objects): ${printMedian(tickingDiff)}</li>
+  <li>Interpretation (different objects): ${printMedian(interpretationDiff)}</li>
+  <li>Compilation (different objects): ${printMedian(rewritingDiff)}</li>
 </ul>
 <ul> Relative Slowdown (different Objects vs same Object)
-  <li>ticking: ${printRelativeSlowdown(tickingDiff, tickingSame)}</li>
-  <li>interpretation: ${printRelativeSlowdown(interpretationDiff, interpretationSame)}</li>
-  <li>rewriting: ${printRelativeSlowdown(rewritingDiff, rewritingSame)}</li>
+  <li>${TICKING_NAME}: ${printRelativeSlowdown(tickingDiff, tickingSame)}</li>
+  <li>Interpretation: ${printRelativeSlowdown(interpretationDiff, interpretationSame)}</li>
+  <li>Compilation: ${printRelativeSlowdown(rewritingDiff, rewritingSame)}</li>
 </ul>
-<ul> Relative Slowdown (vs ticking)
-  <li>interpretation (same object): ${printRelativeSlowdown(interpretationSame, tickingSame)}</li>
-  <li>interpretation (different objects): ${printRelativeSlowdown(interpretationDiff, tickingDiff)}</li>
-  <li>rewriting (same object): ${printRelativeSlowdown(rewritingSame, tickingSame)}</li>
-  <li>rewriting (different objects): ${printRelativeSlowdown(rewritingDiff, tickingDiff)}</li>
+<ul> Relative Slowdown (vs ${TICKING_NAME})
+  <li>Interpretation (same object): ${printRelativeSlowdown(interpretationSame, tickingSame)}</li>
+  <li>Interpretation (different objects): ${printRelativeSlowdown(interpretationDiff, tickingDiff)}</li>
+  <li>Compilation (same object): ${printRelativeSlowdown(rewritingSame, tickingSame)}</li>
+  <li>Compilation (different objects): ${printRelativeSlowdown(rewritingDiff, tickingDiff)}</li>
 </ul>
 `;
 
@@ -325,7 +345,7 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	dataSame.forEach(dat => dat[0] += '\n'+'Same Object');
 
 	function tickingOrRewriting(dat) {
-		return dat[0].startsWith('Rewriting') ||dat[0].startsWith('Ticking');
+		return dat[0].startsWith('Compilation') ||dat[0].startsWith('Convention');
 	}
 	function interpretation(dat) {
 		return !tickingOrRewriting(dat);
@@ -350,7 +370,7 @@ function AEXPR_CONSTRUCTION_CHART(benchmarkData) {
 	// adjust names:
     tickingAndRewritingData.concat(interpretationData).forEach(dat => {
         dat[0] = dat[0]
-            .replace('Ticking', 'Ticking,')
+            .replace('Convention', 'Convention,')
             .replace('Rewriting', 'Rewriting,')
             .replace('Interpretation', 'Interpretation,');
     });
@@ -451,9 +471,9 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 	let baselineMedian = d3.median(baseline[1]);
 
 	// calculate medians and confidence intervals
-	let tickingData = data.find(dat => dat[0] === 'Ticking');
+	let tickingData = data.find(dat => dat[0] === 'Convention');
 	let interpretationData = data.find(dat => dat[0] === 'Interpretation');
-	let rewritingData = data.find(dat => dat[0] === 'Rewriting');
+	let rewritingData = data.find(dat => dat[0] === 'Compilation');
 
 	// show medians and confidence intervals
 	let medianParent = document.getElementById(createChartParentAndReturnId());
@@ -461,14 +481,14 @@ function AEXPR_UPDATE_CHART(benchmarkData) {
 <h2>AExpr update (maintain aspectRatio example):</h2>
 <ul> timing [ms]
   <li>baseline: ${printMedian(baseline)}</li>
-  <li>ticking: ${printMedian(tickingData)}</li>
-  <li>interpretation: ${printMedian(interpretationData)}</li>
-  <li>rewriting: ${printMedian(rewritingData)}</li>
+  <li>Convention: ${printMedian(tickingData)}</li>
+  <li>Interpretation: ${printMedian(interpretationData)}</li>
+  <li>Compilation: ${printMedian(rewritingData)}</li>
 </ul>
 <ul> Relative Slowdown (vs baseline)
-  <li>ticking: ${printRelativeSlowdown(tickingData, baseline)}</li>
-  <li>interpretation: ${printRelativeSlowdown(interpretationData, baseline)}</li>
-  <li>rewriting: ${printRelativeSlowdown(rewritingData, baseline)}</li>
+  <li>Convention: ${printRelativeSlowdown(tickingData, baseline)}</li>
+  <li>Interpretation: ${printRelativeSlowdown(interpretationData, baseline)}</li>
+  <li>Compilation: ${printRelativeSlowdown(rewritingData, baseline)}</li>
 </ul>
 `;
 
@@ -498,12 +518,12 @@ function INTERPRETATION_VS_REWRITING(benchmarkData) {
     let rewritingDataCopy = copyJson(benchmarkData);
     let interpretationDataCopy = copyJson(benchmarkData);
 
-    let rewritingData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Rewriting)']);
+    let rewritingData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Compilation)']);
 	let interpretationData = getSuiteData(benchmarkData, ['AExpr and Callback Count (Interpretation)']);
 
     if(rewritingData.length + interpretationData.length === 0) {
         createFailureMessage(`
-<p>Unable to load Suite 'Rewriting Transformation Impact': No Measurements available</p>
+<p>Unable to load Suite 'Compilation Transformation Impact': No Measurements available</p>
 `);
         return;
     }
@@ -511,7 +531,7 @@ function INTERPRETATION_VS_REWRITING(benchmarkData) {
     // show medians and confidence intervals
 	let medianParent = document.getElementById(createChartParentAndReturnId());
 	medianParent.innerHTML = `
-<h2>Rewriting vs Interpretation (varying #aexpr, 10 callbacks each):</h2>
+<h2>Compilation vs Interpretation (varying #aexpr, 10 callbacks each):</h2>
  <table>
   <tr>
     <th>Size</th>
@@ -520,9 +540,9 @@ function INTERPRETATION_VS_REWRITING(benchmarkData) {
   </tr>
   <tr>
     <th></th>
-    <th>rewriting</th>
-    <th>interpretation</th>
-    <th>rewriting vs interpretation</th>
+    <th>Compilation</th>
+    <th>Interpretation</th>
+    <th>Compilation vs Interpretation</th>
   </tr>
 ${rewritingData.map(rewritingDat => {
 		let name = rewritingDat[0];
@@ -545,10 +565,10 @@ ${rewritingData.map(rewritingDat => {
 		let median = d3.median(interpretationDat[1]);
 		let rewritingDat = rewritingData.find(dat => dat[0] === name);
 
-		interpretationDat[0] = interpretationDat[0].split(' ')[0] +', interpret.';
+		interpretationDat[0] = interpretationDat[0].split(' ')[0] +', Interpr.';
 		interpretationDat[1] = interpretationDat[1].map(val => val / median);
         if(!rewritingDat) { return; }
-		rewritingDat[0] = rewritingDat[0].split(' ')[0] + ', rewriting';
+		rewritingDat[0] = rewritingDat[0].split(' ')[0] + ', Compilat.';
 		rewritingDat[1] = rewritingDat[1].map(val => val / median);
 
 		data.push(interpretationDat, rewritingDat);
@@ -565,7 +585,7 @@ ${rewritingData.map(rewritingDat => {
         margin: Object.assign({}, defaultMargin, {top: 10})
 	});
 
-    chartForSuite(rewritingDataCopy, ['AExpr and Callback Count (Rewriting)']);
+    chartForSuite(rewritingDataCopy, ['AExpr and Callback Count (Compilation)']);
     chartForSuite(interpretationDataCopy, ['AExpr and Callback Count (Interpretation)']);
 }
 
@@ -573,27 +593,27 @@ function REWRITING_IMPACT(benchmarkData) {
     benchmarkData = copyJson(benchmarkData);
     let unnormalizedDataCopy = copyJson((benchmarkData));
 
-    let data = getSuiteData(benchmarkData, ['Rewriting Transformation Impact']);
+    let data = getSuiteData(benchmarkData, ['Compilation Transformation Impact']);
 
     if(data.length <= 1) {
         createFailureMessage(`
-<p>Unable to load Suite 'Rewriting Transformation Impact': ${data.length} of 2 Measurements available</p>
+<p>Unable to load Suite 'Compilation Transformation Impact': ${data.length} of 2 Measurements available</p>
 `);
         return;
     }
 
     let baselineDat = data.find(dat => dat[0] === 'Baseline'),
-        rewritingDat = data.find(dat => dat[0] === 'Rewriting'),
+        rewritingDat = data.find(dat => dat[0] === 'Compilation'),
         baselineMedian = d3.median(baselineDat[1]);
 
     // show medians and confidence intervals
     let medianParent = document.getElementById(createChartParentAndReturnId());
     medianParent.innerHTML = `
-<h2>Rewriting Transformation Impact (sorting a 10000 element array using quicksort)</h2>
+<h2>Compilation Transformation Impact (sorting a 10000 element array using quicksort)</h2>
 <ul> timing [ms]
   <li>Baseline: ${printMedian(baselineDat)}</li>
-  <li>Rewriting: ${printMedian(rewritingDat)}</li>
-Slowdown (Rewriting vs Baseline): ${printRelativeSlowdown(rewritingDat, baselineDat)}
+  <li>Compilation: ${printMedian(rewritingDat)}</li>
+Slowdown (Compilation vs Baseline): ${printRelativeSlowdown(rewritingDat, baselineDat)}
 </ul>
 `;
 
@@ -615,7 +635,7 @@ Slowdown (Rewriting vs Baseline): ${printRelativeSlowdown(rewritingDat, baseline
         height
     });
 
-    chartForSuite(unnormalizedDataCopy, ['Rewriting Transformation Impact']);
+    chartForSuite(unnormalizedDataCopy, ['Compilation Transformation Impact']);
 }
 
 function createFailureMessage(message) {
