@@ -238,6 +238,7 @@ function preprocessJson(json) {
     json = copyJson(json);
 
     let benchmarkData = json[Object.keys(json)[0]];
+
     // adjusts names according to the paper
     function transformData(data) {
     	const replaceMap = new Map();
@@ -248,10 +249,10 @@ function preprocessJson(json) {
         function transformName(string) {
         	replaceMap.forEach((replacer, matcher) => {
         		string = string.replace(new RegExp(matcher, 'g'), replacer);
-			})
+			});
         	return string;
 		}
-		console.log(data);
+
 		data.suites.forEach(suite => {
 			suite.suite = suite.suite.map(transformName);
 			suite.title.name = transformName(suite.title.name);
