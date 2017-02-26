@@ -575,6 +575,9 @@ ${rewritingData.map(rewritingDat => {
 		data.push(interpretationDat, rewritingDat);
 	});
 
+    let margin = Object.assign({}, defaultMargin, {top: 10}),
+        width = 800 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
 	boxPlot(data.slice(-2*6), {
 		id: createChartParentAndReturnId(),
 		title: '',
@@ -583,7 +586,9 @@ ${rewritingData.map(rewritingDat => {
 		min:0,
 		max:3,
 		numberOfElementsPerChunk: 2,
-        margin: Object.assign({}, defaultMargin, {top: 10})
+        margin,
+        width,
+        height
 	});
 
     chartForSuite(rewritingDataCopy, ['AExpr and Callback Count (Compilation)']);
