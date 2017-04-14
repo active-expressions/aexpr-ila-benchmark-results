@@ -691,7 +691,9 @@ function doChartsFromJson(json) {
 
     resetAndBuildInfo(benchmarkData);
 
-	withIgnoreErrors(() => {
+    chartForSuite(benchmarkData, ['Layers Test ILA']);
+
+    withIgnoreErrors(() => {
 		AEXPR_CONSTRUCTION_CHART(benchmarkData);
 	});
 	withIgnoreErrors(() => {
@@ -711,82 +713,4 @@ function doChartsFromJson(json) {
     });
 }
 
-/*
- * HISTORY
- */
-// function createHistory(label = 'unknown history') {
-// 	let history = document.createElement('div');
-// 	history.innerHTML = label;
-// 	document.body.insertBefore(history, document.getElementById('info'));
-// 	history.classList.add('history');
-// 	history.classList.add('clearfix');
-//
-// 	return history;
-// }
-//
-// function createHistoryBox(tooltip = 'bench', parent) {
-// 	let historyBox = document.createElement('div');
-// 	historyBox.classList.add('tooltip');
-// 	historyBox.setAttribute("data-tooltip", tooltip);
-// 	parent.insertBefore(historyBox, parent.firstChild);
-//
-// 	return historyBox;
-// }
-
-// function initializeHistoryBox(historyBox) {
-//     return (error, json) => {
-//         // update the square visually to reflect the fact that it is ready
-//         if(!error) {
-//             historyBox.classList.add('loaded');
-//             historyBox.onclick = () => doChartsFromJson(json);
-//         } else {
-//             historyBox.classList.add('failed');
-//         }
-//     };
-// }
-
-//d3.json("benchmarks/latest.json", doChartsFromJson);
 d3.json('../aexpr-ila-benchmark/results/latest.json', doChartsFromJson);
-
-// // Benchmarks for paper: Active Expressions as basic Building Block for Reactive Mechanisms
-// function paperBenchmark(label, directory) {
-// 	let history = createHistory(label);
-// 	function historyBoxFor(fileName) {
-// 		let filePath = `benchmarks/paper_aeabbbfrm/${directory}/${fileName}`;
-// 		let historyBox = createHistoryBox(fileName, history);
-//
-// 		d3.json(filePath, initializeHistoryBox(historyBox));
-// 	}
-//
-// 	for(let i = 1; i <= 100; i++) {
-// 		historyBoxFor(`run${i}.json`);
-// 	}
-// 	historyBoxFor('result.json');
-// }
-
-// function paperOverviewBenchmark() {
-// 	let history = createHistory('Paper Benchmark (Overview)');
-// 	let filePath = `../aexpr-ila-benchmark/results/latest.json`;
-// 	let historyBox = createHistoryBox('overview.json', history);
-//
-// 	d3.json(filePath, initializeHistoryBox(historyBox));
-// }
-
-//paperOverviewBenchmark();
-//paperBenchmark('AExpr Construction', 'construction');
-//paperBenchmark('AExpr Update', 'update');
-//paperBenchmark('Rewriting Impact', 'rewriting_impact');
-//paperBenchmark('Rewriting vs Interpretation', 'rewriting_vs_interpretation');
-
-// // Travis Build History
-// fetch('benchmarks/results')
-// 	.then(resp => resp.text())
-// 	.then(t => {
-// 		let history = createHistory('Travis Builds');
-// 		let files = t.match(/[^\r\n]+/g);
-// 		files.forEach(file => {
-// 			let historyBox = createHistoryBox(file, history);
-//
-// 			d3.json('benchmarks/history/' + file, initializeHistoryBox(historyBox));
-// 		});
-// 	});
