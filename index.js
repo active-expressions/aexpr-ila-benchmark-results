@@ -12,7 +12,7 @@ var showLabelsId = 'showLabels';
 	document.body.insertBefore(container, document.getElementById('info'));
 })();
 
-var defaultMargin = {top: 30, right: 10, bottom: 100, left: 60};
+var defaultMargin = {top: 30, right: 10, bottom: 100, left: 70};
 
 function boxPlot(data, {
 	id,
@@ -124,7 +124,7 @@ function boxPlot(data, {
 		.append("text") // and text1
 		.attr("transform", "rotate(-90)")
 		.attr("x", -height / 2 - margin.bottom / 2)
-		.attr("y", -55)
+		.attr("y", -65)
 		.attr("dy", ".71em")
 		.style("text-anchor", "middle")
 		.style("font-size", "18px")
@@ -684,6 +684,69 @@ function withIgnoreErrors(cb) {
     }
 }
 
+// ------------------------------------------------------------------
+
+const IMP_IDENTIFIER = "Imperative Implementation";
+const IMP_IDENTIFIER_SHORT = "Imperative";
+const RE_INT_IDENTIFIER = "Active Expressions (Interpretation)";
+const RE_COM_IDENTIFIER = "Active Expressions (Compilation)";
+
+function StandardBench(benchmarkData, benchmarkName) {
+    benchmarkData = copyJson(benchmarkData);
+    let unnormalizedDataCopy = copyJson(benchmarkData);
+
+    let data = getSuiteData(benchmarkData, [benchmarkName]);
+
+    if(data.length === 0) {
+        createFailureMessage(`
+<p>Unable to load Suite '${benchmarkName}': No Measurements available</p>
+`);
+        return;
+    }
+
+    let baseline = data.find(dat => dat[0] === IMP_IDENTIFIER);
+    let baselineMedian = d3.median(baseline[1]);
+
+    // calculate medians and confidence intervals
+    let interpretationData = data.find(dat => dat[0] === RE_INT_IDENTIFIER);
+    let rewritingData = data.find(dat => dat[0] === RE_COM_IDENTIFIER);
+
+    // show medians and confidence intervals
+    let medianParent = document.getElementById(createChartParentAndReturnId());
+    medianParent.innerHTML = `
+<h2>${benchmarkName}:</h2>
+<ul> timing [ms]
+  <li>${IMP_IDENTIFIER}: ${printMedian(baseline)}</li>
+  <li>${RE_INT_IDENTIFIER}: ${printMedian(interpretationData)}</li>
+  <li>${RE_COM_IDENTIFIER}: ${printMedian(rewritingData)}</li>
+</ul>
+<ul> Relative Slowdown (vs ${IMP_IDENTIFIER})
+  <li>${RE_INT_IDENTIFIER}: ${printRelativeSlowdown(interpretationData, baseline)}</li>
+  <li>${RE_COM_IDENTIFIER}: ${printRelativeSlowdown(rewritingData, baseline)}</li>
+</ul>
+`;
+
+    // normalize data
+    data.forEach(dat => {
+        dat[1] = dat[1].map(val => val / baselineMedian);
+    });
+
+    let margin = Object.assign({}, defaultMargin, {top: 10}),
+        width = 600 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+    boxPlot(data, {
+        id: createChartParentAndReturnId(),
+        title: '',
+        benchName: 'Implementation Strategy',
+        yAxisText: `Normalized Execution Time (Imperative = 1.0)`,
+        margin,
+        width,
+        height
+    });
+
+    //chartForSuite(unnormalizedDataCopy, [benchmarkName]);
+}
+
 function doChartsFromJson(json) {
 	resetParent();
 
@@ -691,7 +754,18 @@ function doChartsFromJson(json) {
 
     resetAndBuildInfo(benchmarkData);
 
-    chartForSuite(benchmarkData, ['Layers Test ILA']);
+    withIgnoreErrors(() => {
+        StandardBench(benchmarkData, 'Overhead for Initial Association');
+    });
+    withIgnoreErrors(() => {
+        StandardBench(benchmarkData, 'Frequent Context Change');
+    });
+    withIgnoreErrors(() => {
+        StandardBench(benchmarkData, 'Frequent Message Sends');
+    });
+    withIgnoreErrors(() => {
+        StandardBench(benchmarkData, 'Multiple Layers with Frequent Message Sends');
+    });
 
     withIgnoreErrors(() => {
 		AEXPR_CONSTRUCTION_CHART(benchmarkData);
