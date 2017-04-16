@@ -766,25 +766,6 @@ function doChartsFromJson(json) {
     withIgnoreErrors(() => {
         StandardBench(benchmarkData, 'Multiple Layers with Frequent Message Sends');
     });
-
-    withIgnoreErrors(() => {
-		AEXPR_CONSTRUCTION_CHART(benchmarkData);
-	});
-	withIgnoreErrors(() => {
-		AEXPR_UPDATE_CHART(benchmarkData);
-	});
-	withIgnoreErrors(() => {
-		REWRITING_IMPACT(benchmarkData);
-	});
-	withIgnoreErrors(() => {
-		INTERPRETATION_VS_REWRITING(benchmarkData);
-	});
-    withIgnoreErrors(() => {
-        PARTIALLY_REWRITTEN(benchmarkData);
-    });
-    withIgnoreErrors(() => {
-        PARTIALLY_WRAPPED(benchmarkData);
-    });
 }
 
 d3.json('benchmarks/latest.json', doChartsFromJson);
