@@ -8,7 +8,7 @@ const TICKING_NAME = 'Convention',
 var showLabelsId = 'showLabels';
 (() => {
 	let container = document.createElement('div');
-	container.innerHTML = `<label> <input id="${showLabelsId}" type="checkbox" name="zutat" value="salami" checked> Show Labels </label><br /><br />`;
+	container.innerHTML = `<label> <input id="${showLabelsId}" type="checkbox" name="zutat" value="salami"> Show Labels </label><br /><br />`;
 	document.body.insertBefore(container, document.getElementById('info'));
 })();
 
@@ -732,7 +732,7 @@ function StandardBench(benchmarkData, benchmarkName) {
     });
 
     let margin = Object.assign({}, defaultMargin, {top: 10}),
-        width = 600 - margin.left - margin.right,
+        width = 500 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
     boxPlot(data, {
         id: createChartParentAndReturnId(),
@@ -787,4 +787,4 @@ function doChartsFromJson(json) {
     });
 }
 
-d3.json('../aexpr-ila-benchmark/results/latest.json', doChartsFromJson);
+d3.json('benchmarks/latest.json', doChartsFromJson);
